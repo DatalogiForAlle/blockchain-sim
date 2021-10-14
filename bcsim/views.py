@@ -14,11 +14,8 @@ from django.contrib import messages
 from django.utils.translation import gettext as _
 
 
-
-
-@require_GET
 def home_view(request):
-    
+
     form = CreateBlockchainForm()
     #    initial={'market_id': request.GET['market_id']})
 
@@ -33,10 +30,20 @@ def home_view(request):
     else:
         pass
         # The form should be empty
-        #form = TraderForm()
-    #if request.method == 'POST':
+        # form = TraderForm()
+    # if request.method == 'POST':
     #    form = TraderForm(
     #            initial={'market_id': request.GET['market_id']})
 
+    if request.method == "POST":
+        form = CreateBlockchainForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request, _(
+                    "You created a new blockchain!")
+            )
 
-    return render(request, 'bcsim/home.html', {'CreateBlockchainForm':form})
+            return redirect(reverse('bcsim:home'))
+
+    return render(request, 'bcsim/home.html', {'CreateBlockchainForm': form})

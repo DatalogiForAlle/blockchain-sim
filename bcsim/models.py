@@ -28,7 +28,7 @@ class Blockchain(models.Model):
         Set unique custom id for blockchain before creating a new blockchain object
         """
         # Create blockchain id we are creating a new blockchain (not saving an existing blockchain)
-        if not self.market_id:
+        if not self.id:
             self.id = new_unique_blockchain_id()
         super(Blockchain, self).save(*args, **kwargs)
 
