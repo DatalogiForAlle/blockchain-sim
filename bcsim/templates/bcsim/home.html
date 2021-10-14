@@ -1,0 +1,54 @@
+{% extends "bcsim/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+
+<h4 class="mb-4">Velkommen til Blockchain-Sim</h4>
+
+<div class="row">
+    <div class="col col-12 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                Deltag i blockchain
+            </div>
+            
+            <div class="card-body container">
+                <form action="{% url 'bcsim:home' %}" method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-center">
+                        <button type="submit" class="btn btn-outline-primary my-2">Deltag i blockchain</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- Col with options for "hosts" -->
+    
+    <div class="col col-12 col-lg-6 mt-5 mb-3 my-lg-0">
+        <div class="card mb-4">
+            <div class="card-header">
+                Skab ny blockchain
+            </div>
+            <div class="card-body container">
+                <form action="{% url 'bcsim:home' %}" method="post">
+                    {% csrf_token %}
+                    {{ CreateBlockchainForm|crispy }}
+                    <div class="d-flex justify-content-center">
+                        <button type="submit" class="btn btn-outline-primary my-2">Skab ny blockchain</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% comment %} 
+{% if request.session.market_id %}
+<script>
+    // if client has already joined a game, fill out name field
+    document.getElementById('id_name').value = "{{ request.session.username }}"
+</script>
+{% endif %} {% endcomment %}
+
+{% endblock %}

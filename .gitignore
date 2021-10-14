@@ -1,0 +1,8 @@
+db.sqlite3
+*.csv
+__pycache__/
+.vscode
+.DS_Store
+.env.prod
+easy
+/static/
