@@ -5,5 +5,7 @@ from . import views
 app_name = 'bcsim'
 urlpatterns = [
     path('', views.home_view, name='home'),
-    #path('join_market/', views.join_market, name='join_market'),
+    path('create_view/', views.create_view, name='create'),
+    path('mine/', views.mine_view, name='mine'),
+    path('logout/', views.logout_view, name='logout'),
 ]

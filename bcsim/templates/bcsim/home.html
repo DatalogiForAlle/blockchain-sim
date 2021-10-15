@@ -17,6 +17,7 @@
             <div class="card-body container">
                 <form action="{% url 'bcsim:home' %}" method="post">
                     {% csrf_token %}
+                    {{ join_form|crispy }}
                     <div class="d-flex justify-content-center">
                         <button type="submit" class="btn btn-outline-primary my-2">Deltag i blockchain</button>
                     </div>
@@ -32,9 +33,9 @@
                 Skab ny blockchain
             </div>
             <div class="card-body container">
-                <form action="{% url 'bcsim:home' %}" method="post">
+                <form action="{% url 'bcsim:create' %}" method="post">
                     {% csrf_token %}
-                    {{ CreateBlockchainForm|crispy }}
+                    {{ create_form|crispy }}
                     <div class="d-flex justify-content-center">
                         <button type="submit" class="btn btn-outline-primary my-2">Skab ny blockchain</button>
                     </div>

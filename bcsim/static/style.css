@@ -48,3 +48,12 @@ html {
       border: 1px solid #991010;
   }
   
+.asteriskField {
+    display: none;
+}
+
+@media screen and (max-width: 575px) {
+    .hide-when-small {
+        display: none;
+    }
+}
