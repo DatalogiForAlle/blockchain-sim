@@ -12,7 +12,7 @@ class BlockchainAdmin(admin.ModelAdmin):
 class BlockAdmin(admin.ModelAdmin):
     list_display = (
         'id',
-        'block_num',
+        'block_id',
         'blockchain_id',
         'miner_id',
         'payload',

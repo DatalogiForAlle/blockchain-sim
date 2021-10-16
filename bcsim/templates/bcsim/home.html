@@ -11,7 +11,7 @@
     <div class="col col-12 col-lg-6">
         <div class="card">
             <div class="card-header">
-                Deltag i blockchain
+                Deltag i eksisterende blokkæde
             </div>
             
             <div class="card-body container">
@@ -19,7 +19,7 @@
                     {% csrf_token %}
                     {{ join_form|crispy }}
                     <div class="d-flex justify-content-center">
-                        <button type="submit" class="btn btn-outline-primary my-2">Deltag i blockchain</button>
+                        <button type="submit" name="join_bc" value ="submit" class="btn btn-outline-primary my-2">Deltag</button>
                     </div>
                 </form>
             </div>
@@ -30,26 +30,19 @@
     <div class="col col-12 col-lg-6 mt-5 mb-3 my-lg-0">
         <div class="card mb-4">
             <div class="card-header">
-                Skab ny blockchain
+                Skab en ny blokkæde
             </div>
             <div class="card-body container">
-                <form action="{% url 'bcsim:create' %}" method="post">
+                <form action="{% url 'bcsim:home' %}" method="post">
                     {% csrf_token %}
                     {{ create_form|crispy }}
                     <div class="d-flex justify-content-center">
-                        <button type="submit" class="btn btn-outline-primary my-2">Skab ny blockchain</button>
+                        <button type="submit" name="create_bc" value ="submit" class="btn btn-outline-primary my-2">Skab blokkæde</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 </div>
-{% comment %} 
-{% if request.session.market_id %}
-<script>
-    // if client has already joined a game, fill out name field
-    document.getElementById('id_name').value = "{{ request.session.username }}"
-</script>
-{% endif %} {% endcomment %}
 
 {% endblock %}

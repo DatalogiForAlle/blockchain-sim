@@ -1,58 +1,44 @@
+"""
+When working with forms: 
+1) Ensure that GET requests (and other ‘safe’ methods, as defined by RFC 7231#section-4.2.1) are side effect free.)
+2) In any template that uses a POST form, use the csrf_token tag inside the <form> element if the form is for an internal URL, e.g.:
+    <form method="post">{% csrf_token %}</form>
+
+Read more: https://docs.djangoproject.com/en/3.2/ref/csrf/
+"""
 from django import forms
 from .models import Blockchain, Block
-#from django.core.exceptions import ValidationError
 
 
-class CreateBlockchainForm(forms.ModelForm):
+class BlockchainForm(forms.ModelForm):
+    """ Form used to create a blockchain """
     class Meta:
         model = Blockchain
-
         fields = ['title']
-
-        labels = {
-            'title': 'Hvad skal vi kalde din blockchain?',
-        }
+        labels = {'title': 'Hvad skal vi kalde din blokkæde?', }
         widgets = {
-            'title': forms.TextInput(attrs={'placeholder': 'Min smukke nye blockchain'}),
-            #CharField(widget=forms.Textarea),
-            #'initial_balance': forms.NumberInput(attrs={'step': 0.01, 'onchange': "setTwoNumberDecimal(this)"}),
-            #'min_cost': forms.NumberInput(attrs={'step': 0.01, 'onchange': "setTwoNumberDecimal(this)"}),
-            #'max_cost': forms.NumberInput(attrs={'step': 0.01, 'onchange': "setTwoNumberDecimal(this)"})
+            'title': forms.TextInput(attrs={'placeholder': "Eksempel på et godt navn til en blokkæde"}),
         }
 
 
-class JoinBlockchainForm(forms.Form):
-    # perhaps make this a modelform instead?
-
-    blockchain_id = forms.CharField(label='Blockchain ID', max_length=16)
+class JoinForm(forms.Form):
+    """ Form used to join a blockchain """
+    blockchain_id = forms.CharField(label="Angiv blokkædens ID")
 
     def clean_blockchain_id(self):
         """ Additional validation of the form's blockchain_id field """
         blockchain_id = self.cleaned_data['blockchain_id'].lower()
-        print("bcid", blockchain_id)
         if not Blockchain.objects.filter(id=blockchain_id).exists():
-            print("does not exist")
-
-            raise forms.ValidationError('There is no blockchain with this ID')
-        else:
-            print("does exist")
-
+            raise forms.ValidationError(
+                'Der findes ingen blokkæde med dette ID.')
         return blockchain_id
 
 
 class BlockForm(forms.ModelForm):
-
-    blockchain_id = forms.CharField(label='Blockchain ID', max_length=16)
-
+    """ Form used to create a block """
     class Meta:
         model = Block
-
-        fields = [
-            'block_num',
-            'miner_id',
-            'created_at',
-            'payload',
-            'nonce',
-            'prev_hash'
-
-        ]
+        fields = ['payload', 'nonce']
+        widgets = {
+            'payload': forms.TextInput(attrs={'class': 'form-control form-inline'}),
+        }

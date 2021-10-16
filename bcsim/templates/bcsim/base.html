@@ -19,15 +19,6 @@
             <div class="container">
                 <a class="navbar-brand" href="{% url 'bcsim:home' %}">Blockchain-Sim</a>
                 <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
-                {% comment %} {% if user.is_authenticated %}
-                <div class="collapse navbar-collapse" id="navbarResponsive">
-                    <ul class="navbar-nav ml-auto">
-                        <li class="nav-item"><a class="nav-link" href="{% url 'market:create_market'%}">{% translate 'Create market' %}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'market:my_markets'%}">{% translate 'My markets' %}</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'account_logout' %}">{% translate 'Log Out' %}</a></li>
-                    </ul>
-                </div>
-                {% endif %} {% endcomment %}
             </div>
         </nav>
         
@@ -42,8 +33,7 @@
                     </div>
                 {% endfor %}
             {% endif %}
-
-            {% block content %} {% endblock %}
+            {% block content %}  {% endblock %}
         
         </main>          
         

@@ -5,72 +5,92 @@
 
 {% block content %}
 
-{% if request.session.miner_id %}
-    <h2 class="mb-3 mt-lg-5">Blockchain <span class="text-black-50">[{{ blockchain.id }}]</span></h2>      
-    <div class="card mt-3 mb-5 pt-3">
-        <ul>
-            <li>Du deltager i blokkæden som miner med ID '{{ request.session.miner_id }}'<br></li>
-            <li><a href="{% url 'bcsim:logout' %}">Forlad blokkæden</a></li>
-        </ul>
-    </div>
-{% endif %}
+<h2 class="mb-3">Blokkæde <span class="text-black-50">[{{ blockchain_id }}]</span></h2>      
+<div class="card mt-3 mb-5 pt-3">
+    <ul>
+        <li>Blokkædens navn er '{{ blockchain_title }}'.</li>
+        <li>Dit minearbejder-ID er {{ miner_id }}.</li>
+        <li>
+            <form action="{% url 'bcsim:logout' %}" method="post" id="logout_form">
+                {% csrf_token %}
+                <a href="#" onclick ="logout_form.submit()">Forlad denne blokkæde</a>, hvis du vil deltage i en anden blokkæde.           
+            </form>
+        </li> 
+    </ul>
+</div>
 
 <div class="row mb-5">
     <div class="col col-12 col-lg-6">
-        <h2>Minedrift</h2>
+        <h3>Minedrift</h3>
+            {% if cur_hash %}
+                {% if valid_proof %}
+                    <p class="alert alert-success">
+                        Hash: <br>
+                        <small>{{ cur_hash }}</small>
+                    </p>
+                {% else %}
+                    <p class="alert alert-danger">
+                        Hash: <br>
+                        <small>{{ cur_hash }}</small>
+                    </p>
+                {% endif %}
+            {% endif %}
         <div class="card">
             <div class="card-body">
-                <form action="{% url 'bcsim:mine' %}" method="post">
-                    {% csrf_token %}
-                    {{ mine_form|crispy }}
-                    {% if current_hash %}
-                        {% if valid_proof %}
-                            <p class="alert alert-success">
-                                Hash: <br>
-                                <small>{{ current_hash }}</small>
-                            </p>
-                        {% else %}
-                            <p class="alert alert-danger">
-                                Hash: <br>
-                                <small>{{ current_hash }}</small>
-                            </p>
-                        {% endif %}
-                    {% endif %}              
-                    <div class="d-flex justify-content-center">
-                        <button type="submit" name="calculate_hash" class="btn btn-outline-primary my-2">Beregn hash</button>
-                    </div>
-                    {% if valid_proof %}
-                        <div class="d-flex justify-content-center mt-2">      
-                            <button type="submit" name="add_to_chain" class="btn btn-primary">Tilføj til blokkæde</button>
+                <p class="pb-1 mb-1">Blok-ID: {{ block_id }}</p> 
+                <p class="pb-1 mb-1">Minearbejder-ID: {{ miner_id }}</p>
+                {% comment %} <p class="pb-1 mb-1">Created: {{ block.created_at|date:"d.m.Y" }} {{ block.created_at|time:"H:i:s" }}<br> {% endcomment %}
+                <p class="pb-1 mb-1">Seneste hash: <small>{{ prev_hash }}</small></p>
+                {% if valid_proof %}
+                    <p class="pb-1 mb-1">Payload: {{ payload }} </p>
+                    <p class="pb-1 mb-1">Nonce:  {{ nonce }} </p>
+                {% else %}
+                    <form action="{% url 'bcsim:mine' %}" method="post" id="mine_form">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                    </form>
+                {% endif %}
+
+                
+                {% if valid_proof %}
+                    <form action="" method="POST">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-center mb-2">
+                            <button type="submit" name="add_to_chain" value="submit" class="btn btn-primary">Tilføj til blokkæde</button>
                         </div>
-                    {% endif %}
-                </form>
+                    </form>
+                    <form action="" method="GET">
+                        <div class="d-flex justify-content-center">
+                            <button type="submit" name="refresh" value="submit" class="btn btn-outline-warning">Kassér</button>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="d-flex justify-content-center">
+                        <button type="submit" name="calculate_hash" value="submit" form="mine_form" class="btn btn-outline-primary my-2">Beregn hash</button>
+                    </div>
+ 
+                {% endif %}
+
             </div>
         </div>       
     </div> 
 
     <!-- Col with options for "hosts" -->
     <div class="col col-12 col-lg-6 mt-5 mb-3 my-lg-0">
-        <h2>Blokke i kæden</h2>
+        <h3>Blokke i kæden</h3>
         {% for block in blocks %}
-            <div class="card mb-2 py-3 pl-2">
-                <p class="pb-1 mb-1">Block ID: {{ block.block_num }}</p> 
-                <p class="pb-1 mb-1">Miner: {{ block.miner_id }}</p>
-                <p class="pb-1 mb-1">Nonce: {{ block.nonce }}</p>
-                {% comment %} <p class="pb-1 mb-1">Blockchain: {{ block.blockchain }}</p> {% endcomment %}
-                <p class="pb-1 mb-1">Created: {{ block.created_at|date:"d.m.Y" }} {{ block.created_at|time:"H:i:s" }}<br>
-                <p class="pb-1 mb-0">Previous hash: <small>{{ block.prev_hash }}</small></p>
+            <div class="card mb-2">
+                <div class="card-body">
+                    <p class="mb-1">Blok-ID: {{ block.block_id }}</p> 
+                    <p class="mb-1">Minearbejder-ID: {{ block.miner_id }}</p>
+                    <p class="mb-1">Seneste hash: <small>{{ block.prev_hash }}</small></p>
+                    <p class="mb-1">Payload: {{ block.payload }}</p>
+                    <p class="mb-0">Nonce: {{ block.nonce }}</p>
+                    {% comment %} <p class="pb-1 mb-1">Created: {{ block.created_at|date:"d.m.Y" }} {{ block.created_at|time:"H:i:s" }}<br> {% endcomment %}
+                </div>
             </div>
         {% endfor %}
     </div>
 </div> 
-
-{% comment %} 
-{% if request.session.market_id %}
-<script>
-    // if client has already joined a game, fill out name field
-    document.getElementById('id_name').value = "{{ request.session.username }}"
-</script>
-{% endif %} {% endcomment %}
 
 {% endblock %}

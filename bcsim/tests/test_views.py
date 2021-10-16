@@ -1,0 +1,368 @@
+"""
+To run all tests in this file:
+docker-compose run web pytest market/tests/test_views.py
+
+To run only one or some tests:
+docker-compose run web pytest -k <substring of test function names to run>
+"""
+
+from django.core.exceptions import ValidationError
+from django.urls import reverse
+from ..models import Blockchain, Block
+from ..forms import BlockchainForm, BlockForm, JoinForm
+from ..views import hash_block
+from .factories import BCFactory, BFactory
+import pytest
+from pytest_django.asserts import assertTemplateUsed, assertContains, assertNotContains
+
+
+def test_home_view_get_request(client):
+    """
+    Home view exists at correct url, uses correct template. Template also includes correct forms.
+    """
+    response = client.get(reverse('bcsim:home'))
+
+    assert response.status_code == 200
+    assertTemplateUsed(response, 'bcsim/home.html')
+    assert isinstance(response.context['join_form'], JoinForm)
+    assert isinstance(response.context['create_form'], BlockchainForm)
+
+
+@pytest.fixture
+def test_home_view_get_request_for_client_who_has_joined_a_blockchain(logged_in_client, db):
+    """
+    A client who has already joined a bloclchain should be redirected to the mining page
+    """
+
+    response = loggedd_in_client.get(reverse('bcsim:home'))
+
+    assert response.status_code == 302
+    assert (response['Location'] == reverse('bcsim:mine'))
+
+
+def test_home_view_post_request_join_submit_valid(db, client):
+    """
+    Submitting a post-request to join a block does the following,
+    when a blockchain with the provided id exits
+    1) Creates session data
+    2) Redirects to 'mine'
+    """
+    # client joins a blockchain that exists
+    data = {
+        'blockchain_id': BCFactory().id,
+        'join_bc': 'submit'
+    }
+    response = client.post(reverse('bcsim:home'), data=data)
+
+    # correct session data is now createad
+    assert 'xxx' not in client.session
+    assert 'miner_id' in client.session
+    assert 'blockchain_id' in client.session
+    assert len(client.session['blockchain_id']) == 8
+    assert len(client.session['miner_id']) == 6
+
+    # after join-operations the client is redirected to the mining page
+    assert response.status_code == 302
+    assert (response['Location'] == reverse('bcsim:mine'))
+
+
+def test_home_view_post_request_join_submit_invalid(db, client):
+    """
+    Submitting a valid post-request to join a block
+    when a blockchain with the provided id does not exits
+
+    """
+    # client tries to join a blockchain that does not exist
+    data = {
+        'blockchain_id': 12345678,
+        'join_bc': 'submit'
+    }
+
+    response = client.post(reverse('bcsim:home'), data=data)
+
+    # no session data is createad
+    assert 'miner_id' not in client.session
+    assert 'blockchain_id' not in client.session
+
+    # client should be returned to home page
+    assert response.status_code == 200
+    assertTemplateUsed(response, 'bcsim/home.html')
+
+    # The join form contains an appropriate error message
+    join_form = response.context['join_form']
+    assert 'Der findes ingen blokkæde med dette ID.' in str(join_form)
+
+
+def test_home_view_post_request_create_submit_valid(db, client):
+    """
+    Sending a post request to create blockchain to home view should do the following
+    1) Creates session data for client
+    2) Create a new blockchain
+    3) Redirect to mining page
+    """
+    data = {
+        'title': 'bc title',
+        'create_bc': 'submit'
+    }
+
+    response = client.post(reverse('bcsim:home'), data=data)
+
+    bcs = Blockchain.objects.all()
+
+    # a blockchain with correct title has been created
+    assert bcs.count() == 1
+    bc = bcs.first()
+    bc.title = 'bc title'
+
+    # an initial block has been created
+    assert Block.objects.all().count() == 1
+    assert Block.objects.all().first().payload == 'Genesis'
+
+    # correct session data is now createad
+    assert 'xxx' not in client.session
+    assert 'miner_id' in client.session
+    assert 'blockchain_id' in client.session
+    assert len(client.session['blockchain_id']) == 8
+    assert len(client.session['miner_id']) == 6
+    assert client.session['blockchain_id'] == bc.id
+
+    # after create-operations the client is redirected to the mining page
+    assert response.status_code == 302
+    assert (response['Location'] == reverse('bcsim:mine'))
+
+
+def test_home_view_post_request_create_submit_invalid_no_provided_title(db, client):
+    """
+    Submitting the create new blockchain with no provided title should do the following
+    1) Create no blockchain or session data
+    2) Render home page (status code 200)
+    """
+    data = {
+        'title': '',
+        'create_bc': 'submit'
+    }
+
+    response = client.post(reverse('bcsim:home'), data=data)
+
+    # No blockchain is created
+    bcs = Blockchain.objects.all()
+    assert bcs.count() == 0
+
+    # no session data is createad
+    assert 'miner_id' not in client.session
+    assert 'blockchain_id' not in client.session
+
+    # client should be returned to home page
+    assert response.status_code == 200
+    assertTemplateUsed(response, 'bcsim/home.html')
+
+
+@pytest.fixture
+def test_mine_view_exists_and_returns_correct_template(client_with_session, db):
+    """
+    Mine view exists at proper url, returns 200 and seems to have correct content.
+    """
+
+    bc = BCFactory()
+    block = BFactory(blockchain=bc)
+
+    response = client_with_session.get(reverse('bcsim:mine'))
+
+    assert response.status_code == 200
+    assertTemplateUsed(response, 'bcsim/mine.html')
+    assert response.context['miner_id'] == '123456'
+    assert response.context['blockchain_id'] == bc.id
+    assert response.context['blocks'].last() == block
+    assert response.context['prev_hash'] == hash_block(block)
+
+
+def test_mine_view_returns_404_if_blockchain_does_not_exist(client, db):
+    """
+    If blockchain does not exist in database, client should sent to logout view.
+    """
+    bc_id_with_no_referent = '12345678'
+    session = client.session
+    session['blockchain_id'] = bc_id_with_no_referent
+    session['miner_id'] = '123456'
+    session.save()
+    response = client.get(reverse('bcsim:mine'))
+    assert response.status_code == 302
+    assert (response['Location'] == reverse('bcsim:logout'))
+
+
+def test_mine_view_if_user_has_no_session(client, db):
+    """
+    If client has no session, he should be redirected to homepage.
+    """
+    response = client.get(reverse('bcsim:mine'))
+    assert response.status_code == 302
+    assert (response['Location'] == reverse('bcsim:home'))
+
+
+def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
+    """
+    A logged in client fills out the mining form and presses the 'calculate hash' button.
+    The input data gived a valid proof which is reflected in the returned data.
+    """
+    bc = BCFactory()
+    block = BFactory(blockchain=bc)
+    session = client.session
+    session['blockchain_id'] = bc.id
+    session['miner_id'] = 'dd3cdd'
+    session.save()
+
+    # The user fills out the block form and presses the 'Calculate hash button'
+    data = {
+        'payload': '0',
+        'nonce': 'test nonce',
+        'calculate_hash': 'submit'
+    }
+    response = client.post(reverse('bcsim:mine'), data=data)
+
+    # Response code and template content is checked
+    assert response.status_code == 200
+    assertTemplateUsed(response, 'bcsim/mine.html')
+    assert response.context['miner_id'] == 'dd3cdd'
+    assert response.context['block_id'] == 1
+    assert response.context['blockchain_id'] == bc.id
+    assert response.context['blocks'].last() == block
+    assert response.context['prev_hash'] == hash_block(block)
+    # assert isinstance(response.context['form'], BlockForm)
+
+    expected_cur_hash = hash_block(
+        {'block_id': 1,
+         'miner_id': 'dd3cdd',
+         'prev_hash': hash_block(block),
+         'payload': '0',
+         'nonce': 'test nonce'})
+    assert expected_cur_hash == response.context['cur_hash']
+    assert expected_cur_hash == '16a879a09af3b9e4d4c207dec92feaff54cda296c3038c91ce62baba7c77443a'
+
+    # Since the calculated hash starts with 2 we have a valid proof
+    assert response.context['valid_proof'] == True
+
+    # Since we have valid proof, the context should contain nonce and payload
+    assert response.context['payload'] == '0'
+    assert response.context['nonce'] == 'test nonce'
+
+    # Since the proof is valid, the reponse should contain an 'Add block to chain' button and a 'refresh' button
+    assert 'add_to_chain' in str(response.content)
+    assert 'refresh' in str(response.content)
+
+    # No new block has been created (there is still only 1 block in the chain)
+    assert Block.objects.all().count() == 1
+
+    # The user fills out the block form and presses the 'Calculate hash button'
+    data = {
+        'payload': '0',
+        'nonce': 'test nonce',
+        'add_to_chain': 'submit'
+    }
+    response = client.post(reverse('bcsim:mine'), data=data)
+
+    # ... this will add a new block to the blockchain
+    assert Block.objects.all().count() == 2
+
+    # the new block has the correct attributes
+    new_b = Block.objects.get(blockchain=bc, block_id=1)
+    assert(new_b.payload == '0')
+    assert(new_b.nonce == 'test nonce')
+    assert(new_b.miner_id == 'dd3cdd')
+    assert(new_b.prev_hash == hash_block(block))
+
+
+def test_mine_view_calculate_hash_submit_when_proof_is_not_valid(client, db):
+    """
+    A logged in client fills out the mining form and presses the 'calculate hash' button.
+    The input data does not give valid proof which is reflected in the returned data.
+    """
+    bc = BCFactory()
+    block = BFactory(blockchain=bc)
+    session = client.session
+    session['blockchain_id'] = bc.id
+    session['miner_id'] = 'dd3cdd'
+    session.save()
+    # The user fills out the block form and presses the 'Calculate hash button'
+    data = {
+        'payload': 'test payload',
+        'nonce': 'test nonce 2',
+        'calculate_hash': 'submit'
+    }
+    response = client.post(reverse('bcsim:mine'), data=data)
+    # Response code and template content is checked
+    assert response.status_code == 200
+    assertTemplateUsed(response, 'bcsim/mine.html')
+    assert response.context['miner_id'] == 'dd3cdd'
+    assert response.context['block_id'] == 1
+    assert response.context['blockchain_id'] == bc.id
+    assert response.context['blocks'].last() == block
+    assert response.context['prev_hash'] == hash_block(block)
+    assert isinstance(response.context['form'], BlockForm)
+    expected_cur_hash = hash_block(
+        {'block_id': 1,
+         'miner_id': 'dd3cdd',
+         'prev_hash': hash_block(block),
+         'payload': 'test payload',
+         'nonce': 'test nonce 2'})
+    assert expected_cur_hash == response.context['cur_hash']
+
+    # Since the calculated hash starts does not start with 0,1 or 2 the proof should not be valid
+    assert response.context['valid_proof'] == False
+
+    # Since the proof is valid, the reponse should not contain an 'Add block to chain' button.
+    assert 'add_to_chain' not in str(response.content)
+    assert 'kassér' not in str(response.content)
+
+    # No new block has been created (there is still only 1 block in the chain)
+    assert Block.objects.all().count() == 1
+
+
+# def test_mine_view_add_to_chain(client, db):
+#     """
+#     A logged in client fills out the mining form and presses the 'calculate hash' button.
+#     The input data gived a valid proof which is reflected in the returned data.
+#     """
+#     bc = BCFactory()
+#     block = BFactory(blockchain=bc)
+#     session = client.session
+#     session['blockchain_id'] = bc.id
+#     session['miner_id'] = 'dd3cdd'
+#     session.save()
+
+#     expected_cur_hash = hash_block(
+#         {'block_id': 1,
+#          'miner_id': 'dd3cdd',
+#          'prev_hash': hash_block(block),
+#          'payload': '0',
+#          'nonce': 'test nonce'})
+#     assert expected_cur_hash == response.context['cur_hash']
+
+
+#def regreger
+# # The client now pressees the "Add to chain" button
+# data = {
+#     'payload': 'test payload',
+#     'nonce': 'test nonce',
+#     'add_to_chain': 'submit'
+# }
+# response = client.post(reverse('bcsim:mine'), data=data)
+# # A new block has been created
+# assert Block.objects.all().count() == 2
+# assert response.status_code == 302
+# assert (response['Location'] == reverse('bcsim:mine'))
+
+
+@pytest.fixture
+def test_logout_view(client_with_session, db):
+    """ logout view redirects to home view """
+
+    # the logged in user tries to access home page but is redirected to mining page
+    response = client_with_session.get(reverse('bcsim:home'))
+    assert response.status_code == 302
+    assert (response['Location'] == reverse('bcsim:mine'))
+
+    # logged in user logs out and can not visit home page
+    response = client_with_session.post(reverse('bcsim:logout'))
+
+    response = client_with_session.get(reverse('bcsim:home'))
+    assert response.status_code == 200
