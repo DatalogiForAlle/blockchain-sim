@@ -17,7 +17,7 @@ class BlockchainForm(forms.ModelForm):
         fields = ['title']
         labels = {'title': 'Hvad skal vi kalde din blokkæde?', }
         widgets = {
-            'title': forms.TextInput(attrs={'placeholder': "Eksempel på et godt navn til en blokkæde"}),
+            'title': forms.TextInput(attrs={'placeholder': "2A's chatbeskeder"}),
         }
 
 
@@ -42,3 +42,12 @@ class BlockForm(forms.ModelForm):
         widgets = {
             'payload': forms.TextInput(attrs={'class': 'form-control form-inline'}),
         }
+
+    def clean_nonce(self):
+        """ Nonce has to be an integer """
+        nonce = self.cleaned_data['nonce']
+        if nonce:
+            if not str(nonce).isnumeric():
+                raise forms.ValidationError(
+                    'Nonce skal være et heltal')
+        return nonce

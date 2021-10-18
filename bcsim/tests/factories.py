@@ -1,29 +1,25 @@
 import factory
-
+from datetime import datetime
 from ..models import Blockchain, Block
 
 
-class BCFactory(factory.django.DjangoModelFactory):
+class BlockChainFactory(factory.django.DjangoModelFactory):
     """ Blockchain factory """
     class Meta:
         model = Blockchain
-    title = 'Factory title'
+    title = 'Blockchain test title'
 
 
-class BFactory(factory.django.DjangoModelFactory):
-    """ Block factory """
+class BlockFactory(factory.django.DjangoModelFactory):
+    """ Creates a genesis block by default """
     class Meta:
 
         model = Block
 
-    block_id = factory.Sequence(lambda n: n)
-
-    blockchain = factory.SubFactory(BCFactory)
-
-    miner_id = 'd98d53'
-
+    block_id = 0
+    blockchain = factory.SubFactory(BlockChainFactory)
+    miner_id = '0'
     payload = 'Genesis'
-
-    nonce = '123456789'
-
-    prev_hash = '8ec6b4b08629031e0ff9464ba22bea7a9b997436e80bf56d169ce942c5d5546f'
+    nonce = '0'
+    prev_hash = '0'
+    created_at = datetime.now()

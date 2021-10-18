@@ -5,7 +5,7 @@ To run only the tests in this file:
 docker-compose run web pytest bcsim/tests/test_models.py
 """
 
-from ..models import Blockchain, new_unique_blockchain_id
+from ..models import Blockchain
 import pytest
 
 

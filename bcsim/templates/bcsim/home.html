@@ -7,6 +7,16 @@
 
 <h4 class="mb-4">Velkommen til Blockchain-Sim</h4>
 
+{% if request.session.miner_id %}
+    <!-- Warn users who have already joined a blockchain -->
+    <div class="alert alert-warning">
+        Du deltager allerede i en blokkæde!<br>
+        Hvis du trykker på en af knapperne nedenfor, mister du dit nuværende minearbejder-ID.<br> 
+        Gå tilbage til <a href="{% url 'bcsim:mine' %}">din blokkæde</a>.
+    </div>
+{% endif %} 
+
+<p></p>
 <div class="row">
     <div class="col col-12 col-lg-6">
         <div class="card">

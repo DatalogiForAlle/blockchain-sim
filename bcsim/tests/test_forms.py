@@ -6,7 +6,7 @@ $ docker-compose run web pytest bcsim/tests/test_forms.py
 from ..models import Blockchain, Block
 from ..forms import BlockchainForm, BlockForm, JoinForm
 from django.core.exceptions import ValidationError
-from .factories import BCFactory, BFactory
+from .factories import BlockChainFactory, BlockFactory
 import pytest
 
 
@@ -44,21 +44,20 @@ def test_block_form_is_valid(db, blockform_data):
     assert form.is_valid()
 
 
-def test_block_form_without_payload_is_invalid(db, blockform_data):
-    """ Form is invalid if no payload """
+def test_block_form_nonce_has_to_be_integer_1(db, blockform_data):
+    """ Form is invalid if nonce is not an integer """
 
-    blockform_data['payload'] = ''
+    blockform_data['nonce'] = 'fdd324'
     form = BlockForm(data=blockform_data)
 
     assert not form.is_valid()
-    assert 'payload' in form.errors
-    assert not 'nonce' in form.errors
+    assert 'nonce' in form.errors
+    assert not 'payload' in form.errors
 
 
-def test_block_form_without_nonce_is_invalid(db, blockform_data):
-    """ Form is invalid if no nonce """
-
-    blockform_data['nonce'] = ''
+def test_block_form_nonce_has_to_be_integer_2(db, blockform_data):
+    """ Form is invalid if nonce is not an integer """
+    blockform_data['nonce'] = '1.45'
     form = BlockForm(data=blockform_data)
 
     assert not form.is_valid()
@@ -69,7 +68,7 @@ def test_block_form_without_nonce_is_invalid(db, blockform_data):
 def test_join_form_with_valid_data_is_valid(db):
     """ Form is valid when there is a blockchain with provided id """
     data = {
-        'blockchain_id': BCFactory().id
+        'blockchain_id': BlockChainFactory().id
     }
     form = JoinForm(data=data)
 

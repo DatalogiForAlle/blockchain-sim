@@ -10,11 +10,11 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 from ..models import Blockchain, Block
 from ..forms import BlockchainForm, BlockForm, JoinForm
-from ..views import hash_block
-from .factories import BCFactory, BFactory
+from ..views import hash_context
+from .factories import BlockChainFactory, BlockFactory, BlockFactory
 import pytest
 from pytest_django.asserts import assertTemplateUsed, assertContains, assertNotContains
-
+from datetime import datetime
 
 def test_home_view_get_request(client):
     """
@@ -28,18 +28,6 @@ def test_home_view_get_request(client):
     assert isinstance(response.context['create_form'], BlockchainForm)
 
 
-@pytest.fixture
-def test_home_view_get_request_for_client_who_has_joined_a_blockchain(logged_in_client, db):
-    """
-    A client who has already joined a bloclchain should be redirected to the mining page
-    """
-
-    response = loggedd_in_client.get(reverse('bcsim:home'))
-
-    assert response.status_code == 302
-    assert (response['Location'] == reverse('bcsim:mine'))
-
-
 def test_home_view_post_request_join_submit_valid(db, client):
     """
     Submitting a post-request to join a block does the following,
@@ -49,7 +37,7 @@ def test_home_view_post_request_join_submit_valid(db, client):
     """
     # client joins a blockchain that exists
     data = {
-        'blockchain_id': BCFactory().id,
+        'blockchain_id': BlockChainFactory().id,
         'join_bc': 'submit'
     }
     response = client.post(reverse('bcsim:home'), data=data)
@@ -157,21 +145,23 @@ def test_home_view_post_request_create_submit_invalid_no_provided_title(db, clie
     assertTemplateUsed(response, 'bcsim/home.html')
 
 
-@pytest.fixture
-def test_mine_view_exists_and_returns_correct_template(client_with_session, db):
+def test_mine_view_exists_and_returns_correct_template(client, db):
     """
     Mine view exists at proper url, returns 200 and seems to have correct content.
     """
+    block = BlockFactory(blockchain=BlockChainFactory())
 
-    bc = BCFactory()
-    block = BFactory(blockchain=bc)
+    session = client.session
+    session['blockchain_id'] = block.blockchain.id
+    session['miner_id'] = '123456'
+    session.save()
 
-    response = client_with_session.get(reverse('bcsim:mine'))
+    response = client.get(reverse('bcsim:mine'))
 
     assert response.status_code == 200
     assertTemplateUsed(response, 'bcsim/mine.html')
     assert response.context['miner_id'] == '123456'
-    assert response.context['blockchain_id'] == bc.id
+    assert response.context['blockchain_id'] == block.blockchain.id
     assert response.context['blocks'].last() == block
     assert response.context['prev_hash'] == hash_block(block)
 
@@ -204,8 +194,8 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     A logged in client fills out the mining form and presses the 'calculate hash' button.
     The input data gived a valid proof which is reflected in the returned data.
     """
-    bc = BCFactory()
-    block = BFactory(blockchain=bc)
+    bc = BlockChainFactory()
+    block = BlockFactory(blockchain=bc)
     session = client.session
     session['blockchain_id'] = bc.id
     session['miner_id'] = 'dd3cdd'
@@ -214,7 +204,7 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     # The user fills out the block form and presses the 'Calculate hash button'
     data = {
         'payload': '0',
-        'nonce': 'test nonce',
+        'nonce': 123,
         'calculate_hash': 'submit'
     }
     response = client.post(reverse('bcsim:mine'), data=data)
@@ -234,16 +224,15 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
          'miner_id': 'dd3cdd',
          'prev_hash': hash_block(block),
          'payload': '0',
-         'nonce': 'test nonce'})
+         'nonce': 123})
     assert expected_cur_hash == response.context['cur_hash']
-    assert expected_cur_hash == '16a879a09af3b9e4d4c207dec92feaff54cda296c3038c91ce62baba7c77443a'
 
     # Since the calculated hash starts with 2 we have a valid proof
     assert response.context['valid_proof'] == True
 
     # Since we have valid proof, the context should contain nonce and payload
     assert response.context['payload'] == '0'
-    assert response.context['nonce'] == 'test nonce'
+    assert response.context['nonce'] == '123'
 
     # Since the proof is valid, the reponse should contain an 'Add block to chain' button and a 'refresh' button
     assert 'add_to_chain' in str(response.content)
@@ -266,7 +255,7 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     # the new block has the correct attributes
     new_b = Block.objects.get(blockchain=bc, block_id=1)
     assert(new_b.payload == '0')
-    assert(new_b.nonce == 'test nonce')
+    assert(new_b.nonce == '123')
     assert(new_b.miner_id == 'dd3cdd')
     assert(new_b.prev_hash == hash_block(block))
 
@@ -276,25 +265,27 @@ def test_mine_view_calculate_hash_submit_when_proof_is_not_valid(client, db):
     A logged in client fills out the mining form and presses the 'calculate hash' button.
     The input data does not give valid proof which is reflected in the returned data.
     """
-    bc = BCFactory()
-    block = BFactory(blockchain=bc)
+    block = BlockFactory(blockchain=BlockChainFactory())
     session = client.session
-    session['blockchain_id'] = bc.id
+    session['blockchain_id'] = block.blockchain.id
     session['miner_id'] = 'dd3cdd'
     session.save()
+
     # The user fills out the block form and presses the 'Calculate hash button'
     data = {
         'payload': 'test payload',
-        'nonce': 'test nonce 2',
+        'nonce': 1234567892,
         'calculate_hash': 'submit'
     }
+    assert block.block_id == 0
     response = client.post(reverse('bcsim:mine'), data=data)
+
     # Response code and template content is checked
     assert response.status_code == 200
     assertTemplateUsed(response, 'bcsim/mine.html')
     assert response.context['miner_id'] == 'dd3cdd'
     assert response.context['block_id'] == 1
-    assert response.context['blockchain_id'] == bc.id
+    assert response.context['blockchain_id'] == block.blockchain.id
     assert response.context['blocks'].last() == block
     assert response.context['prev_hash'] == hash_block(block)
     assert isinstance(response.context['form'], BlockForm)
@@ -303,7 +294,7 @@ def test_mine_view_calculate_hash_submit_when_proof_is_not_valid(client, db):
          'miner_id': 'dd3cdd',
          'prev_hash': hash_block(block),
          'payload': 'test payload',
-         'nonce': 'test nonce 2'})
+         'nonce': 1234567892})
     assert expected_cur_hash == response.context['cur_hash']
 
     # Since the calculated hash starts does not start with 0,1 or 2 the proof should not be valid
@@ -317,52 +308,47 @@ def test_mine_view_calculate_hash_submit_when_proof_is_not_valid(client, db):
     assert Block.objects.all().count() == 1
 
 
-# def test_mine_view_add_to_chain(client, db):
-#     """
-#     A logged in client fills out the mining form and presses the 'calculate hash' button.
-#     The input data gived a valid proof which is reflected in the returned data.
-#     """
-#     bc = BCFactory()
-#     block = BFactory(blockchain=bc)
-#     session = client.session
-#     session['blockchain_id'] = bc.id
-#     session['miner_id'] = 'dd3cdd'
-#     session.save()
+def test_mine_view_add_to_chain(client, db):
+    """
+    A logged in client fills out the mining form and presses the 'calculate hash' button.
+    The input data gived a valid proof which is reflected in the returned data.
+    """
+    block = BlockFactory(blockchain=BlockChainFactory())
+    session = client.session
+    session['blockchain_id'] = block.blockchain.id
+    session['miner_id'] = 'dd3cdd'
+    session.save()
 
-#     expected_cur_hash = hash_block(
-#         {'block_id': 1,
-#          'miner_id': 'dd3cdd',
-#          'prev_hash': hash_block(block),
-#          'payload': '0',
-#          'nonce': 'test nonce'})
-#     assert expected_cur_hash == response.context['cur_hash']
+    expected_cur_hash = hash_block(
+        {'block_id': 1,
+         'miner_id': 'dd3cdd',
+         'prev_hash': hash_block(block),
+         'payload': '0',
+         'nonce': 'test nonce'})
 
-
-#def regreger
-# # The client now pressees the "Add to chain" button
-# data = {
-#     'payload': 'test payload',
-#     'nonce': 'test nonce',
-#     'add_to_chain': 'submit'
-# }
-# response = client.post(reverse('bcsim:mine'), data=data)
-# # A new block has been created
-# assert Block.objects.all().count() == 2
-# assert response.status_code == 302
-# assert (response['Location'] == reverse('bcsim:mine'))
+    #assert expected_cur_hash == response.context['cur_hash']
 
 
-@pytest.fixture
-def test_logout_view(client_with_session, db):
+def test_logout_view(client, db):
     """ logout view redirects to home view """
+    block = BlockFactory()
+    session = client.session
+    session['blockchain_id'] = block.blockchain.id
+    session['miner_id'] = 'dd3cdd'
+    session.save()
 
-    # the logged in user tries to access home page but is redirected to mining page
-    response = client_with_session.get(reverse('bcsim:home'))
+    response = client.post(reverse('bcsim:logout'))
+
     assert response.status_code == 302
-    assert (response['Location'] == reverse('bcsim:mine'))
+    assert (response['Location'] == reverse('bcsim:home'))
 
-    # logged in user logs out and can not visit home page
-    response = client_with_session.post(reverse('bcsim:logout'))
 
-    response = client_with_session.get(reverse('bcsim:home'))
-    assert response.status_code == 200
+def test_datetime(client):
+    created_at = datetime.now()
+
+    timestamp = datetime.timestamp(created_at)
+    created_at_2 = datetime.fromtimestamp(timestamp)
+
+    assert str(created_at) == str(created_at_2)
+
+
