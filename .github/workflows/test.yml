@@ -1,0 +1,21 @@
+name: Build and test MarketSim
+
+on:
+  push:
+    branches: 'master'
+  pull_request:
+    branches: '*'
+
+jobs:
+  test:
+    name: Run test suite in Docker container
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Build docker images
+        run: make build
+
+      - name: Run tests
+        run: make test
