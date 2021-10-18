@@ -174,7 +174,7 @@ def test_mine_view_returns_404_if_blockchain_does_not_exist(client, db):
     bc_id_with_no_referent = '123456789'
     session = client.session
     session['blockchain_id'] = bc_id_with_no_referent
-    session['miner_id'] = '123456'
+    session['miner_id'] = '1234567'
     session.save()
     response = client.get(reverse('bcsim:mine'))
     assert response.status_code == 302

@@ -1,4 +1,4 @@
-name: Build and test MarketSim
+name: Build and test blockchain-sim
 
 on:
   push:
