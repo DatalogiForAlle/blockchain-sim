@@ -171,7 +171,7 @@ def test_mine_view_returns_404_if_blockchain_does_not_exist(client, db):
     """
     If blockchain does not exist in database, client should sent to logout view.
     """
-    bc_id_with_no_referent = '12345678'
+    bc_id_with_no_referent = '123456789'
     session = client.session
     session['blockchain_id'] = bc_id_with_no_referent
     session['miner_id'] = '123456'
