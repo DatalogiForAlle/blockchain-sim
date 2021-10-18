@@ -6,14 +6,11 @@ from django.contrib import messages
 from .models import Blockchain, Block
 from .forms import BlockchainForm, JoinForm, BlockForm
 import secrets
-import hashlib
-from datetime import datetime
 
 # All session variables
 MINER_VARS = ['miner_id', 'blockchain_id']
-TIMESTAMP_VARS = ['created_at', 'timestamp']
 VALID_PROOF_VARS = ['valid_proof', 'valid_proof_payload', 'valid_proof_nonce',
-                    'valid_proof_block_id', 'valid_proof_timestamp']
+                    'valid_proof_block_id']
 
 
 def del_session_vars(session_vars, request):
@@ -28,9 +25,8 @@ def logout_view(request):
     blockchain_id = request.session['blockchain_id']
 
     # delete all session variables
-    del_session_vars(MINER_VARS)
-    del_session_vars(TIMESTAMP_VARS)
-    del_session_vars(VALID_PROOF_VARS)
+    del_session_vars(MINER_VARS, request)
+    del_session_vars(VALID_PROOF_VARS, request)
 
     messages.info(
         request, f"Du forlod blokkæden med ID {blockchain_id}.")
@@ -79,7 +75,6 @@ def home_view(request):
                     payload="Genesis",
                     nonce="0",
                     prev_hash="0",
-                    created_at=datetime.now()
                 )
                 messages.success(request, "Du har startet en ny blokkæde!")
 
@@ -99,7 +94,6 @@ def hash_context(c):
         block_id=c['block_id'],
         miner_id=c['miner_id'],
         prev_hash=c['prev_hash'],
-        created_at=c['created_at'],
         payload=c['payload'],
         nonce=c['nonce'])
     return block.hash()
@@ -127,16 +121,6 @@ def mine_view(request):
     prev_hash = last_block.hash()
     block_id = len(blocks)
 
-    if not 'timestamp' in request.session:
-        created_at = datetime.now()
-        timestamp = datetime.timestamp(created_at)
-        request.session['created_at'] = created_at
-        request.session['timestamp'] = timestamp
-
-    else:
-        created_at = request.session['created_at']
-        timestamp = request.session['timestamp']
-
     context = {
         'blocks': blocks,
         'blockchain_id': blockchain_id,
@@ -144,7 +128,6 @@ def mine_view(request):
 
         'block_id': block_id,
         'miner_id': miner_id,
-        'created_at': created_at,
         'prev_hash': prev_hash,
     }
 
@@ -154,7 +137,6 @@ def mine_view(request):
 
         if 'refresh' in request.POST:
             del_session_vars(VALID_PROOF_VARS, request)
-            del_session_vars(TIMESTAMP_VARS, request)
             return redirect(reverse('bcsim:mine'))
 
         if 'calculate_hash' in request.POST:
@@ -176,7 +158,6 @@ def mine_view(request):
                     context['valid_proof'] = True
                     request.session['valid_proof'] = True
                     request.session['valid_proof_block_id'] = block_id
-                    request.session['valid_proof_timestamp'] = timestamp
                     request.session['valid_proof_payload'] = payload
                     request.session['valid_proof_nonce'] = nonce
 
@@ -190,15 +171,12 @@ def mine_view(request):
                 messages.error(
                     request, f"En anden minearbejder tilføjede blok #{request.session['valid_proof_block_id']} før dig!")
                 del_session_vars(VALID_PROOF_VARS, request)
-                del_session_vars(TIMESTAMP_VARS, request)
                 return redirect(reverse('bcsim:mine'))
 
             new_block = Block(
                 block_id=block_id,
                 miner_id=miner_id,
                 prev_hash=prev_hash,
-                created_at=datetime.fromtimestamp(
-                    request.session['valid_proof_timestamp']),
                 payload=request.session['valid_proof_payload'],
                 nonce=request.session['valid_proof_nonce'],
                 blockchain_id=blockchain_id
@@ -215,7 +193,6 @@ def mine_view(request):
                 request, "Du har tilføjet en blok til kæden!")
 
             del_session_vars(VALID_PROOF_VARS, request)
-            del_session_vars(TIMESTAMP_VARS, request)
 
             return redirect(reverse('bcsim:mine'))
 

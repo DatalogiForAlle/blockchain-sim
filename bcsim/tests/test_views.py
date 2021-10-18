@@ -16,6 +16,7 @@ import pytest
 from pytest_django.asserts import assertTemplateUsed, assertContains, assertNotContains
 from datetime import datetime
 
+
 def test_home_view_get_request(client):
     """
     Home view exists at correct url, uses correct template. Template also includes correct forms.
@@ -163,7 +164,7 @@ def test_mine_view_exists_and_returns_correct_template(client, db):
     assert response.context['miner_id'] == '123456'
     assert response.context['blockchain_id'] == block.blockchain.id
     assert response.context['blocks'].last() == block
-    assert response.context['prev_hash'] == hash_block(block)
+    assert response.context['prev_hash'] == block.hash()
 
 
 def test_mine_view_returns_404_if_blockchain_does_not_exist(client, db):
@@ -216,13 +217,13 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     assert response.context['block_id'] == 1
     assert response.context['blockchain_id'] == bc.id
     assert response.context['blocks'].last() == block
-    assert response.context['prev_hash'] == hash_block(block)
+    assert response.context['prev_hash'] == block.hash()
     # assert isinstance(response.context['form'], BlockForm)
 
-    expected_cur_hash = hash_block(
+    expected_cur_hash = hash_context(
         {'block_id': 1,
          'miner_id': 'dd3cdd',
-         'prev_hash': hash_block(block),
+         'prev_hash': block.hash(),
          'payload': '0',
          'nonce': 123})
     assert expected_cur_hash == response.context['cur_hash']
@@ -257,7 +258,7 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     assert(new_b.payload == '0')
     assert(new_b.nonce == '123')
     assert(new_b.miner_id == 'dd3cdd')
-    assert(new_b.prev_hash == hash_block(block))
+    assert(new_b.prev_hash == block.hash())
 
 
 def test_mine_view_calculate_hash_submit_when_proof_is_not_valid(client, db):
@@ -287,12 +288,13 @@ def test_mine_view_calculate_hash_submit_when_proof_is_not_valid(client, db):
     assert response.context['block_id'] == 1
     assert response.context['blockchain_id'] == block.blockchain.id
     assert response.context['blocks'].last() == block
-    assert response.context['prev_hash'] == hash_block(block)
+    assert response.context['prev_hash'] == block.hash()
     assert isinstance(response.context['form'], BlockForm)
-    expected_cur_hash = hash_block(
+
+    expected_cur_hash = hash_context(
         {'block_id': 1,
          'miner_id': 'dd3cdd',
-         'prev_hash': hash_block(block),
+         'prev_hash': block.hash(),
          'payload': 'test payload',
          'nonce': 1234567892})
     assert expected_cur_hash == response.context['cur_hash']
@@ -319,10 +321,10 @@ def test_mine_view_add_to_chain(client, db):
     session['miner_id'] = 'dd3cdd'
     session.save()
 
-    expected_cur_hash = hash_block(
+    expected_cur_hash = hash_context(
         {'block_id': 1,
          'miner_id': 'dd3cdd',
-         'prev_hash': hash_block(block),
+         'prev_hash': block.hash(),
          'payload': '0',
          'nonce': 'test nonce'})
 
@@ -341,14 +343,3 @@ def test_logout_view(client, db):
 
     assert response.status_code == 302
     assert (response['Location'] == reverse('bcsim:home'))
-
-
-def test_datetime(client):
-    created_at = datetime.now()
-
-    timestamp = datetime.timestamp(created_at)
-    created_at_2 = datetime.fromtimestamp(timestamp)
-
-    assert str(created_at) == str(created_at_2)
-
-

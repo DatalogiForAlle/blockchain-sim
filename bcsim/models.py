@@ -48,13 +48,8 @@ class Block(models.Model):
 
     prev_hash = models.CharField(max_length=200)
 
-    #cur_hash = models.CharField(max_length=200)
-
-    # created_at is the time of creation of the BlockForm which was later submitted
-    created_at = models.DateTimeField(auto_now_add=False)
-
     def hash(self):
-        s = f"{self.block_id}{self.miner_id}{self.prev_hash}{self.created_at}{self.payload}{self.nonce}"
+        s = f"{self.block_id}{self.miner_id}{self.prev_hash}{self.payload}{self.nonce}"
         hash = hashlib.sha256(s.encode()).hexdigest()
         return hash
 

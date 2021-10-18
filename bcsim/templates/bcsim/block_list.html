@@ -4,10 +4,8 @@
             <p class="mb-1">Blok-ID: {{ block.block_id }}</p> 
             <p class="mb-1">Minearbejder-ID: {{ block.miner_id }}</p>
             <p class="mb-1">Seneste hash: <small>{{ block.prev_hash }}</small></p>
-            <p class="pb-1 mb-1">Timestamp: {{ block.created_at|date:"d.m.Y" }} {{ block.created_at|time:"H:i:s" }}<br>
             <p class="mb-1">Payload: {{ block.payload }}</p>
             <p class="mb-1">Nonce: {{ block.nonce }}</p>
-            {% comment %} <p class="mb-1">Hash: <small>{{ block.hash }}</small></p> {% endcomment %}
         </div>
     </div>
 {% endfor %}

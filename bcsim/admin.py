@@ -17,7 +17,6 @@ class BlockAdmin(admin.ModelAdmin):
         'miner_id',
         'payload',
         'nonce',
-        'created_at'
     )
 
 

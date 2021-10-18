@@ -22,4 +22,3 @@ class BlockFactory(factory.django.DjangoModelFactory):
     payload = 'Genesis'
     nonce = '0'
     prev_hash = '0'
-    created_at = datetime.now()
