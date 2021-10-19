@@ -14,12 +14,12 @@ build:  ## Build or rebuild development docker image
 develop:  ## Run development server
 	docker-compose -f docker-compose.dev.yml up --remove-orphans
 
+
 shell:  ## Open shell in running docker development container
 	docker-compose -f docker-compose.dev.yml exec web /bin/bash
 
 # ---------- Checks and tests ---------- #
 test: ## Execute tests within the docker image
-	docker-compose -f docker-compose.dev.yml run --rm web django-admin compilemessages
 	DJANGO_SETTINGS_MODULE=config.settings docker-compose -f docker-compose.dev.yml run --rm web pytest
 
 
