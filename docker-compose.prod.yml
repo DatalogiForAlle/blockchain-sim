@@ -18,7 +18,7 @@ services:
   nginx:
     restart: always
     image: nginx:latest
-    hostname: blockchain-sim.markedsspillet.dk
+    hostname: blockchain-sim.dataekspeditioner.dk
     volumes:
       - static_volume:/code/static
       - type: bind
@@ -29,11 +29,11 @@ services:
     depends_on:
       - web
     environment:
-      - VIRTUAL_HOST=blockchain-sim.markedsspillet.dk
+      - VIRTUAL_HOST=blockchain-sim.dataekspeditioner.dk
       - VIRTUAL_PORT=1337
-      - LETSENCRYPT_HOST=blockchain-sim.markedsspillet.dk
+      - LETSENCRYPT_HOST=blockchain-sim.dataekspeditioner.dk
       - LETSENCRYPT_EMAIL=dybber@di.ku.dk
-      - url=https://blockchain-sim.markedsspillet.dk
+      - url=https://blockchain-sim.dataekspeditioner.dk.dk
     networks:
       - nginx_nginx-proxynet
 
