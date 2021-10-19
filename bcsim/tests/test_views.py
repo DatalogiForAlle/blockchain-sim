@@ -1,6 +1,6 @@
 """
 To run all tests in this file:
-docker-compose run web pytest market/tests/test_views.py
+docker-compose run web pytest bcsim/tests/test_views.py
 
 To run only one or some tests:
 docker-compose run web pytest -k <substring of test function names to run>
