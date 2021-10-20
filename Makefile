@@ -14,6 +14,8 @@ build:  ## Build or rebuild development docker image
 develop:  ## Run development server
 	docker-compose -f docker-compose.dev.yml up --remove-orphans
 
+stop: ## Stop production server
+	docker-compose -f docker-compose.dev.yml down --remove-orphans
 
 shell:  ## Open shell in running docker development container
 	docker-compose -f docker-compose.dev.yml exec web /bin/bash
@@ -21,7 +23,6 @@ shell:  ## Open shell in running docker development container
 # ---------- Checks and tests ---------- #
 test: ## Execute tests within the docker image
 	DJANGO_SETTINGS_MODULE=config.settings docker-compose -f docker-compose.dev.yml run --rm web pytest
-
 
 flake8: ## PEP8 codestyle check
 	flake8 --exclude bcsim/migrations --extend-exclude accounts/migrations

@@ -8,6 +8,7 @@ services:
       - database_volume:/db/
       - .:/code
     ports:
+      # "host:container"
       - "8000:8000"
     env_file:
       - ./.env.dev
