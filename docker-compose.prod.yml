@@ -30,7 +30,7 @@ services:
       - web
     environment:
       - VIRTUAL_HOST=blockchain-sim.dataekspeditioner.dk
-      - VIRTUAL_PORT=1337
+      - VIRTUAL_PORT=1347
       - LETSENCRYPT_HOST=blockchain-sim.dataekspeditioner.dk
       - LETSENCRYPT_EMAIL=dybber@di.ku.dk
       - url=https://blockchain-sim.dataekspeditioner.dk.dk
