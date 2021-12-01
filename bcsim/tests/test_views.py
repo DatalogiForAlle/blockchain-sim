@@ -39,6 +39,7 @@ def test_home_view_post_request_join_submit_valid(db, client):
     # client joins a blockchain that exists
     data = {
         'blockchain_id': BlockChainFactory().id,
+        'name': 'Bob',
         'join_bc': 'submit'
     }
     response = client.post(reverse('bcsim:home'), data=data)

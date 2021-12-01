@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Blockchain, Block
+from .models import Blockchain, Block, Miner
 
 class BlockchainAdmin(admin.ModelAdmin):
     list_display = (
@@ -12,13 +12,18 @@ class BlockchainAdmin(admin.ModelAdmin):
 class BlockAdmin(admin.ModelAdmin):
     list_display = (
         'id',
-        'block_id',
-        'blockchain_id',
-        'miner_id',
+        'blockchain',
         'payload',
         'nonce',
     )
 
 
+class MinerAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+    )
+
+
 admin.site.register(Blockchain, BlockchainAdmin)
 admin.site.register(Block, BlockAdmin)
+admin.site.register(Miner, MinerAdmin)

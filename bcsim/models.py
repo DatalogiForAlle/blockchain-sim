@@ -16,7 +16,9 @@ def new_unique_blockchain_id():
 
 
 class Blockchain(models.Model):
+
     id = models.CharField(max_length=16, primary_key=True)
+    creator_name = models.CharField(max_length=36,default="Blockchain creator")
     title = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -33,13 +35,17 @@ class Blockchain(models.Model):
         super(Blockchain, self).save(*args, **kwargs)
 
 
-class Block(models.Model):
+class Miner(models.Model):
+    blockchain = models.ForeignKey(Blockchain, on_delete=models.CASCADE)
+    name = models.CharField(max_length=36,)
+    created_at = models.DateTimeField(auto_now_add=True)
 
-    block_id = models.IntegerField(primary_key=False)
+
+class Block(models.Model):
 
     blockchain = models.ForeignKey(Blockchain, on_delete=models.CASCADE)
 
-    miner_id = models.CharField(max_length=16)
+    miner = models.ForeignKey(Miner, on_delete=models.CASCADE)
 
     payload = models.CharField(max_length=200, null=True, blank=True)
 
@@ -49,7 +55,7 @@ class Block(models.Model):
     prev_hash = models.CharField(max_length=200)
 
     def hash(self):
-        s = f"{self.block_id}{self.miner_id}{self.prev_hash}{self.payload}{self.nonce}"
+        s = f"{self.block_id}{self.miner.id}{self.prev_hash}{self.payload}{self.nonce}"
         hash = hashlib.sha256(s.encode()).hexdigest()
         return hash
 
