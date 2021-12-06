@@ -1,6 +1,9 @@
 """
 To run only the tests in this file:
-$ docker-compose run web pytest bcsim/tests/test_forms.py
+make test_forms
+
+To run only one or some tests:
+docker-compose -f docker-compose.dev.yml run web pytes -k <substring of test function names to run>
 """
 
 from ..models import Blockchain, Block
@@ -12,7 +15,7 @@ import pytest
 
 def test_blockchain_form_can_create(db):
     """ Submitting a valid blockchain form creates a blockchain."""
-    data = {'title': 'bc title'}
+    data = {'creator_name': 'Jane', 'title': 'bc title'}
     form = BlockchainForm(data=data)
 
     assert form.is_valid()
@@ -22,11 +25,13 @@ def test_blockchain_form_can_create(db):
 
 
 def test_blockchain_form_title_is_required(db):
-    """ Blockchain form w/o title is invalid."""
-    data = {'title': ''}
+    """ Blockchain form without title or creator name is invalid."""
+    data = {'title': '', 'creator_name': ''}
     form = BlockchainForm(data=data)
 
     assert not form.is_valid()
+    assert 'title' in form.errors
+    assert 'creator_name' in form.errors
 
 
 @pytest.fixture

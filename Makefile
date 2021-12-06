@@ -25,6 +25,16 @@ shell:  ## Open shell in running docker development container
 test: ## Execute tests within the docker image
 	DJANGO_SETTINGS_MODULE=config.settings docker-compose -f docker-compose.dev.yml run --rm web pytest
 
+test_models: ## Execute tests within the docker image
+	DJANGO_SETTINGS_MODULE=config.settings docker-compose -f docker-compose.dev.yml run web pytest bcsim/tests/test_models.py
+
+test_forms: ## Execute tests within the docker image
+	DJANGO_SETTINGS_MODULE=config.settings docker-compose -f docker-compose.dev.yml run web pytest bcsim/tests/test_forms.py
+
+test_views: ## Execute tests within the docker image
+	DJANGO_SETTINGS_MODULE=config.settings docker-compose -f docker-compose.dev.yml run web pytest bcsim/tests/test_views.py
+
+
 flake8: ## PEP8 codestyle check
 	flake8 --exclude bcsim/migrations --extend-exclude accounts/migrations
 

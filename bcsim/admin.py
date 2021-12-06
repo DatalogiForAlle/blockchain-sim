@@ -6,12 +6,14 @@ class BlockchainAdmin(admin.ModelAdmin):
         'id',
         'title',
         'created_at',
+        'creator_name'
     )
 
 
 class BlockAdmin(admin.ModelAdmin):
     list_display = (
         'id',
+        'block_id',
         'blockchain',
         'payload',
         'nonce',

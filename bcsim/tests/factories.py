@@ -8,6 +8,15 @@ class BlockChainFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Blockchain
     title = 'Blockchain test title'
+    creator_name = 'skaber'
+
+
+class MinerFactory(factory.django.DjangoModelFactory):
+    """ Miner factory """
+    class Meta:
+        model = Miner
+    name = 'Bob'
+    blockchain = factory.SubFactory(BlockChainFactory)
 
 
 class BlockFactory(factory.django.DjangoModelFactory):
@@ -18,14 +27,7 @@ class BlockFactory(factory.django.DjangoModelFactory):
 
     block_id = 0
     blockchain = factory.SubFactory(BlockChainFactory)
-    miner_id = '0'
+    miner = factory.SubFactory(MinerFactory)
     payload = 'Genesis'
     nonce = '0'
     prev_hash = '0'
-
-class MinerFactory(factory.django.DjangoModelFactory):
-    """ Miner factory """
-    class Meta:
-        model = Miner
-    name = 'Bob'
-    blockchain = factory.SubFactory(BlockChainFactory)

@@ -78,7 +78,7 @@ def home_view(request):
                 Block.objects.create(
                     block_id=0,
                     blockchain=new_blockchain,
-                    miner_id="0",
+                    miner = creator,
                     payload="Genesis",
                     nonce="0",
                     prev_hash="0",
@@ -100,20 +100,20 @@ def home_view(request):
     return render(request, 'bcsim/home.html', context)
 
 
-def hash_context(c):
+def hash_context(context):
     block = Block(
-        block_id=c['block_id'],
-        miner_id=c['miner_id'],
-        prev_hash=c['prev_hash'],
-        payload=c['payload'],
-        nonce=c['nonce'])
+        block_id=context['block_id'],
+        miner=context['miner'],
+        prev_hash=context['prev_hash'],
+        payload=context['payload'],
+        nonce=context['nonce']
+    )
     return block.hash()
 
 
 def mine_view(request):
     try:
         miner = Miner.objects.get(id=request.session['miner_id'])
-        print("miner", miner.id)
     except:
         # if miner is not in session, return to home:
         return redirect(reverse('bcsim:home'))
@@ -122,6 +122,7 @@ def mine_view(request):
         blocks = Block.objects.filter(
             blockchain=blockchain).order_by('-block_id')
         last_block = blocks.first()
+        
         assert last_block.block_id == len(
             blocks) - 1, f'block-id {last_block.block_id} does not equal len(blocks) - 1 = {len(blocks)} -1'
 
@@ -154,7 +155,6 @@ def mine_view(request):
 
                     context['payload'] = form.cleaned_data['payload']
                     context['nonce'] = form.cleaned_data['nonce']
-
                     cur_hash = hash_context(context)
 
                     context['cur_hash'] = cur_hash
@@ -180,11 +180,11 @@ def mine_view(request):
 
                 new_block = Block(
                     block_id=block_id,
-                    miner_id=miner_id,
+                    blockchain=blockchain,
+                    miner=miner,
                     prev_hash=prev_hash,
                     payload=request.session['valid_proof_payload'],
                     nonce=request.session['valid_proof_nonce'],
-                    blockchain_id=blockchain_id
                 )
 
                 assert new_block.hash()[0] in list(

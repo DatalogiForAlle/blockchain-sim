@@ -18,7 +18,7 @@ def new_unique_blockchain_id():
 class Blockchain(models.Model):
 
     id = models.CharField(max_length=16, primary_key=True)
-    creator_name = models.CharField(max_length=36,default="Blockchain creator")
+    creator_name = models.CharField(max_length=36,default="Skaber")
     title = models.CharField(max_length=50)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -43,11 +43,14 @@ class Miner(models.Model):
 
 class Block(models.Model):
 
+    # block_id is not primary_key, as it is only unique together w. the blockchain
+    block_id = models.IntegerField(primary_key=False)
+
     blockchain = models.ForeignKey(Blockchain, on_delete=models.CASCADE)
 
     miner = models.ForeignKey(Miner, on_delete=models.CASCADE)
 
-    payload = models.CharField(max_length=200, null=True, blank=True)
+    payload = models.CharField(max_length=200)
 
     # Nonce has to be an integer, but to be able to store very big integers, we save it as a string.
     nonce = models.CharField(max_length=60, null=True, blank=True)
@@ -55,7 +58,7 @@ class Block(models.Model):
     prev_hash = models.CharField(max_length=200)
 
     def hash(self):
-        s = f"{self.block_id}{self.miner.id}{self.prev_hash}{self.payload}{self.nonce}"
+        s = f"{self.block_id}{self.miner.name}{self.prev_hash}{self.payload}{self.nonce}"
         hash = hashlib.sha256(s.encode()).hexdigest()
         return hash
 
