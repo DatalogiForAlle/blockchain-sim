@@ -2,7 +2,10 @@
 Model tests.
 
 To run only the tests in this file:
-docker-compose run web pytest bcsim/tests/test_models.py
+make test_models
+
+To run only one or some tests:
+docker-compose -f docker-compose.dev.yml run web pytes -k <substring of test function names to run>
 """
 
 from ..models import Blockchain

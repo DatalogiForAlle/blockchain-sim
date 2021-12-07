@@ -1,6 +1,6 @@
 import factory
 from datetime import datetime
-from ..models import Blockchain, Block
+from ..models import Blockchain, Block, Miner
 
 
 class BlockChainFactory(factory.django.DjangoModelFactory):
@@ -8,6 +8,16 @@ class BlockChainFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Blockchain
     title = 'Blockchain test title'
+    creator_name = 'skaber'
+
+
+class MinerFactory(factory.django.DjangoModelFactory):
+    """ Miner factory """
+    class Meta:
+        model = Miner
+    name = 'Bob'
+    miner_id = 0
+    blockchain = factory.SubFactory(BlockChainFactory)
 
 
 class BlockFactory(factory.django.DjangoModelFactory):
@@ -18,7 +28,7 @@ class BlockFactory(factory.django.DjangoModelFactory):
 
     block_id = 0
     blockchain = factory.SubFactory(BlockChainFactory)
-    miner_id = '0'
+    miner = factory.SubFactory(MinerFactory)
     payload = 'Genesis'
     nonce = '0'
     prev_hash = '0'

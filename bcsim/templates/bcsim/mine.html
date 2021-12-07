@@ -5,7 +5,16 @@
 
 {% block content %}
 
-<h4 class="mb-4"><span class="text-black-50">Blokkæde [{{ blockchain_id }}]</span>: {{ blockchain_title }}</h4>      
+<h4 class="mb-4"><span class="text-black-50">Blokkæde [{{ blockchain.id }}]</span>: {{ blockchain.title }}</h4>      
+
+{% if miner.creator %}
+<h6>Inviter minearbejdere til blokkæden</h6>
+<div class="d-flex mb-5">
+    <input class="form-control" type="text" 
+        value="{% if request.is_secure %}https{% else %}http{% endif %}://{{ request.get_host }}{% url 'bcsim:home' %}?blockchain_id={{ blockchain.id }}" id="join_link" style="width:350px">
+    <button class="btn btn-primary btn-sm" onclick="copy_join_link()">Kopier</button>
+</div>
+{% endif %}
 
 <div class="row mb-5">
     <div class="col col-12 col-lg-6">
@@ -22,15 +31,14 @@
                 </p>
             {% endif %}
         {% endif %}
-        <div class="card">
-            <div class="card-header">
+        <div class="card" >
+            <div class="card-header" style="background-color: {{ miner.color}}">
                 Minedrift
             </div>            
             <div class="card-body">
                 <p class="pb-1 mb-1">Blok-ID: {{ block_id }}</p> 
-                <p class="pb-1 mb-1">Minearbejder-ID: {{ miner_id }}</p>
+                <p class="pb-1 mb-1">Minearbejder: {{ miner.name }}</p>
                 <p class="pb-1 mb-1">Seneste hash: <small>{{ prev_hash }}</small></p>
-                {% comment %} <p class="pb-1 mb-1">Seneste hash: {{ prev_hash|slice:":10" }}...{{ prev_hash|slice:"54:" }}</p> {% endcomment %}
                 {% if valid_proof %}
                     <p class="pb-1 mb-1">Payload: {{ payload }} </p>
                     <p class="pb-1 mb-1">Nonce:  {{ nonce }} </p>
@@ -77,5 +85,19 @@
         hx-target="#block-list">
     </div>
 </div> 
+
+{% endblock %}
+
+{% block javascript %}
+
+<script>
+    function copy_join_link() {
+        // From w3schools
+        var link_text = document.getElementById("join_link");
+        link_text.select();
+        link_text.setSelectionRange(0, link_text.value.length);
+        document.execCommand("copy")
+    }
+</script>
 
 {% endblock %}
