@@ -1,5 +1,5 @@
 {% for block in blocks %}
-    <div class="card mb-2">
+    <div class="card mb-2" style="background-color:{{ block.miner.color}}">
         <div class="card-body">
             <p class="mb-1">Blok-ID: {{ block.block_id }}</p> 
             <p class="mb-1">Minearbejder: {{ block.miner.name }}</p>

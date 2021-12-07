@@ -19,11 +19,24 @@ def del_session_vars(session_vars, request):
             del request.session[var]
 
 
+@require_GET
+def participants_view(request):
+    try:
+        miner = Miner.objects.get(id=request.session['miner_id'])
+    except:
+        # if client does not have a session, return to home:
+        return redirect(reverse('bcsim:home'))
+    else:
+        miners = Miner.objects.filter(blockchain=miner.blockchain).order_by('-balance')
+        context = {'miners': miners, 'blockchain': miner.blockchain, 'client_miner_name':miner.name}
+        return render(request, 'bcsim/participants.html', context)
+
+    
 @require_POST
 def logout_view(request):
     """ Destroy session variables, and return to home view """
     blockchain_id = request.session['blockchain_id']
-
+    
     # delete all session variables
     del_session_vars(MINER_VARS, request)
     del_session_vars(VALID_PROOF_VARS, request)
@@ -36,7 +49,12 @@ def logout_view(request):
 
 def home_view(request):
     join_form = JoinForm()
+
     create_form = BlockchainForm()
+
+    if request.method == 'GET':
+        if 'blockchain_id' in request.GET:
+            join_form = JoinForm(initial={'blockchain_id':request.GET['blockchain_id']})
 
     if request.method == "POST":
 
@@ -50,6 +68,7 @@ def home_view(request):
                 )
                 new_miner = join_form.save(commit=False)
                 new_miner.blockchain = blockchain
+                new_miner.miner_id = Miner.objects.filter(blockchain=blockchain).count()
                 new_miner.save()
 
                 # set session variables for client
@@ -70,7 +89,7 @@ def home_view(request):
                 new_blockchain = create_form.save()
                 
                 # create miner
-                creator = Miner.objects.create(name=create_form.cleaned_data['creator_name'], blockchain=new_blockchain)
+                creator = Miner.objects.create(name=create_form.cleaned_data['creator_name'], blockchain=new_blockchain, miner_id=0, creator=True)
                 request.session['miner_id'] = creator.id
                 request.session['blockchain_id'] = new_blockchain.id
 
@@ -115,7 +134,7 @@ def mine_view(request):
     try:
         miner = Miner.objects.get(id=request.session['miner_id'])
     except:
-        # if miner is not in session, return to home:
+        # if client does not have a session, return to home:
         return redirect(reverse('bcsim:home'))
     else:
         blockchain = miner.blockchain
@@ -193,6 +212,10 @@ def mine_view(request):
                 ), f"Prev_hash of new block does not match hash of last block. Error caught before saving to db."
 
                 new_block.save()
+
+                # miner reward
+                miner.balance += 100
+                miner.save()
 
                 messages.success(
                     request, "Du har tilføjet en blok til kæden!")

@@ -16,6 +16,7 @@ class MinerFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Miner
     name = 'Bob'
+    miner_id = 0
     blockchain = factory.SubFactory(BlockChainFactory)
 
 

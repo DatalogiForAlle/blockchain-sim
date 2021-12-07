@@ -1,0 +1,38 @@
+{% extends "bcsim/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Mine{% endblock %}
+
+{% block content %}
+
+<h4 class="mb-4"><span class="text-black-50">Blokkæde [{{ blockchain.id }}]</span>: {{ blockchain.title }}</h4>      
+
+<h5>Minearbejdere</h5>
+<div class="table-responsive">
+    <table class="table mb-5" id="trader_status_table"> 
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Navn</th>
+                <th scope="col">Antal blokke tilføjet</th>
+                <th scope="col">Saldo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for miner in miners %}
+                <tr style="background-color: {{ miner.color }}">
+                    <th scope="row">{{ forloop.counter }}</th>
+                    {% if miner.name == client_miner_name %}
+                        <td>{{ miner.name }} </td>
+                    {% else %}
+                        <td>{{ miner.name }}</td>
+                    {% endif %}
+                    <td>{{ miner.num_mined_blocks }} </td>
+                    <td>{{ miner.balance }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock content %}

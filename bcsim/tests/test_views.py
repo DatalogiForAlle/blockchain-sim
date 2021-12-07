@@ -16,6 +16,22 @@ import pytest
 from pytest_django.asserts import assertTemplateUsed, assertContains, assertNotContains
 from datetime import datetime
 
+def test_participants_view(db, client):
+    """
+    Participants view exists at correct url and uses correct template.
+    """
+    miner = MinerFactory()
+    session = client.session
+    session['blockchain_id'] = miner.blockchain.id
+    session['miner_id'] = miner.id
+    session.save()
+
+
+    response = client.get(reverse('bcsim:participants'))
+    
+    assert response.status_code == 200
+    assertTemplateUsed(response, 'bcsim/participants.html')
+
 
 def test_home_view_get_request(client):
     """
