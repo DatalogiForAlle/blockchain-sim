@@ -20,16 +20,16 @@
         </thead>
         <tbody>
             {% for miner in miners %}
-                <tr style="background-color: {{ miner.color }}">
+                {% if miner.name == client_miner_name %}
+                    <tr style="background-color: {{ miner.color }}">
+                {% else %}
+                    <tr>
+                {% endif %}                   
                     <th scope="row">{{ forloop.counter }}</th>
-                    {% if miner.name == client_miner_name %}
-                        <td>{{ miner.name }} </td>
-                    {% else %}
-                        <td>{{ miner.name }}</td>
-                    {% endif %}
+                    <td>{{ miner.name }} </td>
                     <td>{{ miner.num_mined_blocks }} </td>
                     <td>{{ miner.balance }}</td>
-                </tr>
+                    </tr>
             {% endfor %}
         </tbody>
     </table>
