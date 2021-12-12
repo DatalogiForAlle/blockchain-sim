@@ -1,5 +1,5 @@
 {% for block in blocks %}
-    <div class="card mb-2" style="background-color:{{ block.miner.color}}">
+    <div class="card" style="background-color:{{ block.miner.color}}">
         <div class="card-body">
             <p class="mb-1">Blok-ID: {{ block.block_id }}</p> 
             <p class="mb-1">Minearbejder: {{ block.miner.name }}</p>
@@ -8,4 +8,10 @@
             <p class="mb-1">Nonce: {{ block.nonce }}</p>
         </div>
     </div>
+    {% if block.block_id > 0 %}
+        <div class="row" style="height:20px">
+            <div class="col-6 border-right"></div>
+            <div class="col-6 border-left"></div>
+        </div>
+    {% endif %}
 {% endfor %}
