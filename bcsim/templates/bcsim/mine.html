@@ -18,19 +18,7 @@
 
 <div class="row mb-5">
     <div class="col col-12 col-lg-6">
-        {% if cur_hash %}
-            {% if valid_proof %}
-                <p class="alert alert-success">
-                    Hash: <br>
-                    <small>{{ cur_hash }}</small>
-                </p>
-            {% else %}
-                <p class="alert alert-danger">
-                    Hash: <br>
-                    <small>{{ cur_hash }}</small>
-                </p>
-            {% endif %}
-        {% endif %}
+       
         <div class="card" >
             <div class="card-header" style="background-color: {{ miner.color}}">
                 Minedrift
@@ -70,8 +58,22 @@
                     </div>
                 {% endif %}
             </div>
-        </div>       
+        </div>   
+        {% if cur_hash %}
+            {% if valid_proof %}
+                <p class="alert alert-success">
+                    Gyldigt hash: <br>
+                    <small>{{ cur_hash }}</small>
+                </p>
+            {% else %}
+                <p class="alert alert-danger">
+                    Ugyldigt hash: <br>
+                    <small>{{ cur_hash }}</small>
+                </p>
+            {% endif %}
+        {% endif %}    
     </div> 
+ 
 
     <!-- Column with list of blocks in chain" -->
     <div class="col col-12 col-lg-6 mt-5 mb-3 my-lg-0" id="block-list">

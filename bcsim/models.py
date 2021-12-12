@@ -2,7 +2,7 @@ from django.db import models
 from datetime import datetime
 import secrets
 import hashlib
-
+import random
 
 def new_unique_blockchain_id():
     """
@@ -50,16 +50,26 @@ class Miner(models.Model):
 
     def color(self):
         """
-        The colors are from this list https://davidpiesse.github.io/tailwind-md-colours/ (more can be added)
+        Get the unique color identifying the miner in question. 
         """
-        NICE_COLORS = ["#b3e5fc",  "#dcedc8",  "#ffcdd2", "#ff8a80", "#ff80ab",  "#ea80fc", "#b388ff", "#42a5f5", "#03a9f4",  "#26c6da", "#26a69a", "#8bc34a", "#dce775", "#ffee58",
-                        "#ffca28", "#ffa726",  "#ff7043", "#c5cae9",  "#b2dfdb", "#a7ffeb", "#fff9c4", "#f8bbd0", "#bbdefb", "#c8e6c9", "#ffecb3", "#e1bee7", "#69f0ae", "#ffe0b2", "#ffd180", "#cfd8dc", "#d1c4e9", "#b2ebf2", "#84ffff", "#f0f4c3", "#f4ff81",
-                        "#ffccbc",  "#ff9e80", "#b2ff59", ]
+
+        # The 38 nice colors are from this list: https: // davidpiesse.github.io/tailwind-md-colours /
+        # (more colors can be added from the list if needed)
+        
+        NICE_COLORS = [
+            "#b3e5fc", "#dcedc8", "#ffcdd2", "#ff8a80", "#ff80ab", "#ea80fc", "#b388ff", "#42a5f5", "#03a9f4", "#26c6da",
+            "#26a69a", "#8bc34a", "#dce775", "#ffee58", "#ffca28", "#ffa726", "#ff7043", "#c5cae9", "#b2dfdb", "#a7ffeb",
+            "#fff9c4", "#f8bbd0", "#bbdefb", "#c8e6c9", "#ffecb3", "#e1bee7", "#69f0ae", "#ffe0b2", "#ffd180", "#cfd8dc",
+            "#d1c4e9", "#b2ebf2", "#84ffff", "#f0f4c3", "#f4ff81", "#ffccbc",  "#ff9e80", "#b2ff59", ]
+
+        # We want a random ordering of the colors
+        random.seed(self.blockchain.id)
+        random.shuffle(NICE_COLORS)
 
         i = self.miner_id
         if i < len(NICE_COLORS):
             color = NICE_COLORS[i]
-        else:         
+        else:
             red = (100 + i*100) % 255
             green = (50 + int((i/3)*100)) % 255
             blue = (0 + int((i/2)*100)) % 255
