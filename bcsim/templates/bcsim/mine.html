@@ -27,8 +27,8 @@
                 <p class="pb-1 mb-1">Blok-ID: {{ block_id }}</p> 
                 <p class="pb-1 mb-1">Minearbejder: {{ miner.name }}</p>
                 <p class="pb-1 mb-1">Seneste hash: <small>{{ prev_hash }}</small></p>
+                <p class="pb-1 mb-1">Payload: {{ payload }} </p>
                 {% if valid_proof %}
-                    <p class="pb-1 mb-1">Payload: {{ payload }} </p>
                     <p class="pb-1 mb-1">Nonce:  {{ nonce }} </p>
                 {% else %}
                     <form action="{% url 'bcsim:mine' %}" method="post" id="mine_form">

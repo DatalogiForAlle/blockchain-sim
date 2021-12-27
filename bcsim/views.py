@@ -1,4 +1,5 @@
 
+import random
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
@@ -12,6 +13,24 @@ MINER_VARS = ['miner_id', 'blockchain_id']
 VALID_PROOF_VARS = ['valid_proof', 'valid_proof_payload', 'valid_proof_nonce',
                     'valid_proof_block_id']
 
+
+def next_payload(blockchain_id, block_id):
+
+
+    first_names = ('John', 'Andy', 'Joe', 'Sandy', 'Sally',
+               'Alice', 'Joanna', 'Serena', 'Oliver', 'Steven')
+    
+    last_names = ('Johnson', 'Smith', 'Williams', 'Brown',
+              'Silbersmith', 'Garcia', 'Miller', 'Davis', 'Jones', 'Lopez')
+        
+    random.seed(blockchain_id + str(block_id))
+
+    sender = f"{random.choice(first_names)} {random.choice(last_names)}"
+    recipient = f"{random.choice(first_names)} {random.choice(last_names)}"
+
+    amount = random.randint(1, 100)
+
+    return f"{amount} diku-dollars fra {sender} til {recipient}"
 
 def del_session_vars(session_vars, request):
     for var in session_vars:
@@ -75,7 +94,7 @@ def home_view(request):
                 request.session['miner_id'] = new_miner.id
                 request.session['blockchain_id'] = request.POST['blockchain_id']
 
-                messages.success(request, "Du deltagere nu i en blokkæde!")
+                messages.success(request, "Du deltager nu i en blokkæde!")
 
                 # redirect to mining page
                 return redirect(reverse('bcsim:mine'))
@@ -147,13 +166,14 @@ def mine_view(request):
 
         prev_hash = last_block.hash()
         block_id = len(blocks)
+        payload = next_payload(blockchain.id, block_id)
         context = {
             'blocks': blocks,
             'blockchain': blockchain,
             'block_id': block_id,
             'miner': miner,
             'prev_hash': prev_hash,
-
+            'payload': payload
         }
 
         form = BlockForm()
@@ -169,13 +189,10 @@ def mine_view(request):
                 form = BlockForm(request.POST)
 
                 if form.is_valid():
-                    payload = form.cleaned_data['payload']
                     nonce = form.cleaned_data['nonce']
+                    context['nonce'] = nonce
 
-                    context['payload'] = form.cleaned_data['payload']
-                    context['nonce'] = form.cleaned_data['nonce']
                     cur_hash = hash_context(context)
-
                     context['cur_hash'] = cur_hash
 
                     if cur_hash[0] in list("012"):
@@ -229,7 +246,7 @@ def mine_view(request):
         return render(request, 'bcsim/mine.html', context)
 
 
-@ require_GET
+@require_GET
 def block_list_view_htmx(request):
     if not 'blockchain_id' in request.session:
         return redirect(reverse('bcsim:home'))

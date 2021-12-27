@@ -65,10 +65,7 @@ class BlockForm(forms.ModelForm):
     """ Form used to create a block """
     class Meta:
         model = Block
-        fields = ['payload', 'nonce']
-        widgets = {
-            'payload': forms.TextInput(attrs={'class': 'form-control form-inline'}),
-        }
+        fields = ['nonce']
 
     def clean_nonce(self):
         """ Nonce has to be an integer """
