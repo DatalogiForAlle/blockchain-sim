@@ -23,7 +23,7 @@ class BlockAdmin(admin.ModelAdmin):
 class MinerAdmin(admin.ModelAdmin):
     list_display = (
         'id',
-        'miner_id',
+        'miner_num',
         'balance'
     )
 

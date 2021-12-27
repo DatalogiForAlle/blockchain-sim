@@ -15,7 +15,7 @@ class BlockchainForm(forms.ModelForm):
     class Meta:
         model = Blockchain
         fields = ['creator_name','title']
-        labels = {'creator_name': 'Dit navn', 'title': 'Hvad skal vi kalde blokkæden?', }
+        labels = {'creator_name': 'Dit navn/holdnavn', 'title': 'Hvad skal vi kalde blokkæden?', }
         widgets = {
             'title': forms.TextInput(attrs={'placeholder': "2A's chatbeskeder"}),
         }
@@ -30,7 +30,7 @@ class JoinForm(forms.ModelForm):
         model = Miner
         fields = ['name']
         labels = {
-            'name': 'Dit navn',
+            'name': 'Dit navn/holdnavn',
         }
         help_texts = {
             'name': 'Navnet, du vælger her, vil være synligt for de andre deltagere i blokkæden',
@@ -75,3 +75,29 @@ class BlockForm(forms.ModelForm):
                 raise forms.ValidationError(
                     'Nonce skal være et heltal')
         return nonce
+
+
+class LoginForm(forms.Form):
+    """ Form to login to existing block as existing user """
+
+    blockchain_id = forms.CharField(max_length=8, label="Blokkæde-ID",
+                                    help_text="Indtast blokkædens ID")
+    
+    miner_id = forms.CharField(max_length=8, label="Minearbejder-ID",
+                               help_text="Indtast dit minearbejder-ID")
+
+    def clean_blockchain_id(self):
+        """ Additional validation of the form's blockchain_id field """
+        blockchain_id = self.cleaned_data['blockchain_id'].lower()
+        if not Blockchain.objects.filter(id=blockchain_id).exists():
+            raise forms.ValidationError(
+                'Der findes ingen blokkæde med dette ID.')
+        return blockchain_id
+
+    def clean_miner_id(self):
+        """ Additional validation of the form's min_id field """
+        miner_id = self.cleaned_data['miner_id'].lower()
+        if not Miner.objects.filter(id=miner_id).exists():
+            raise forms.ValidationError(
+                'Der findes ingen minearbejder med dette ID.')
+        return miner_id
