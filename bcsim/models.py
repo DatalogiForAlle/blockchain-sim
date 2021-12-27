@@ -35,13 +35,34 @@ class Blockchain(models.Model):
         super(Blockchain, self).save(*args, **kwargs)
 
 
+def new_unique_miner_id():
+    """
+    Create a new unique blockchain ID (8 alphabetic chars)
+    """
+    while True:
+        miner_id = secrets.token_hex(4)
+        if not Miner.objects.filter(id=miner_id).exists():
+            break
+    return miner_id
+
+
 class Miner(models.Model):
-    miner_id = models.IntegerField(primary_key=False, null=True)
+    id = models.CharField(max_length=16, primary_key=True)
+    miner_num = models.IntegerField(primary_key=False, null=True)
     blockchain = models.ForeignKey(Blockchain, on_delete=models.CASCADE)
     name = models.CharField(max_length=36,)
     balance = models.IntegerField(default = 0)
     created_at = models.DateTimeField(auto_now_add=True)
     creator = models.BooleanField(default=False)
+
+    def save(self, *args, **kwargs):
+        """
+        Set unique custom id for miner before creating a new blockchain object
+        """
+        if not self.id:
+            # we are creating a new miner (not updating an existing miner)
+            self.id = new_unique_miner_id()
+        super(Miner, self).save(*args, **kwargs)
 
     def num_mined_blocks(self):
         """ Number of mined blocks (genesis block not included) """
@@ -66,7 +87,7 @@ class Miner(models.Model):
         random.seed(self.blockchain.id)
         random.shuffle(NICE_COLORS)
 
-        i = self.miner_id
+        i = self.miner_num
         if i < len(NICE_COLORS):
             color = NICE_COLORS[i]
         else:

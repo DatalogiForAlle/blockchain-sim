@@ -5,54 +5,107 @@
 
 {% block content %}
 
+
 <h4 class="mb-4">Velkommen til Blockchain-Sim</h4>
 
-{% if request.session.miner_id %}
-    <!-- Warn users who have already joined a blockchain -->
-    <div class="alert alert-warning">
+{% if miner %}
+    <!-- Inform users who have already joined a blockchain -->
+    <div class="alert alert-info">
         Du deltager allerede i en blokkæde!<br>
-        Hvis du trykker på en af knapperne nedenfor, mister du dit nuværende minearbejder-ID.<br> 
+        Blokkædens ID er {{ miner.blockchain.id }}.<br>
+        Dit minearbejder-ID er {{ miner.id}}.<br>
+        Dit navn/hold-navn er {{ miner.name}}. <br>
         Gå tilbage til <a href="{% url 'bcsim:mine' %}">din blokkæde</a>.
     </div>
-{% endif %} 
-
-<p></p>
-<div class="row">
-    <div class="col col-12 col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                Deltag i eksisterende blokkæde
-            </div>
-            
-            <div class="card-body container">
-                <form action="{% url 'bcsim:home' %}" method="post">
-                    {% csrf_token %}
-                    {{ join_form|crispy }}
-                    <div class="d-flex justify-content-center">
-                        <button type="submit" name="join_bc" value ="submit" class="btn btn-outline-primary my-2">Deltag</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+    <div class="alert alert-warning">
+        Hvis du ønsker at deltage i eller oprette en anden blokklæde, så skal du først <a href = "{% url 'bcsim:logout' %}">forlade din blokkæde</a>.
     </div>
-    <!-- Col with options for "hosts" -->
+
     
-    <div class="col col-12 col-lg-6 mt-5 mb-3 my-lg-0">
-        <div class="card mb-4">
-            <div class="card-header">
-                Skab en ny blokkæde
-            </div>
-            <div class="card-body container">
-                <form action="{% url 'bcsim:home' %}" method="post">
-                    {% csrf_token %}
-                    {{ create_form|crispy }}
-                    <div class="d-flex justify-content-center">
-                        <button type="submit" name="create_bc" value ="submit" class="btn btn-outline-primary my-2">Skab blokkæde</button>
-                    </div>
-                </form>
-            </div>
+{% else %} 
+<div id="accordion">
+    <div class="card">
+      <div class="card-header" id="headingOne">
+        <h5 class="mb-0">
+          <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+            Skab ny blokkæde
+          </button>
+        </h5>
+      </div>
+  
+      <div id="collapseOne" class="collapse" aria-labelledby="headingOne" data-parent="#accordion">
+        <div class="card-body">
+            <form action="{% url 'bcsim:home' %}" method="post">
+                {% csrf_token %}
+                {{ create_form|crispy }}
+                <div class="d-flex justify-content-center">
+                    <button type="submit" name="create_bc" value ="submit" class="btn btn-outline-primary my-2">Skab blokkæde</button>
+                </div>
+            </form>
         </div>
+      </div>
     </div>
-</div>
+    <br>
+    <div class="card">
+      <div class="card-header" id="headingTwo">
+        <h5 class="mb-0">
+          <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+            Opret ny minearbejder i eksisterende blokkæde
+          </button>
+        </h5>
+      </div>
+      <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordion">
+        <div class="card-body">
+            <form action="{% url 'bcsim:home' %}" method="post">
+                {% csrf_token %}
+                {{ join_form|crispy }}
+                <div class="d-flex justify-content-center">
+                    <button type="submit" name="join_bc" value ="submit" class="btn btn-outline-primary my-2">Opret minearbejder</button>
+                </div>
+            </form>
+        </div>
+      </div>
+    </div>
+    <br>
+    <div class="card">
+      <div class="card-header" id="headingThree">
+        <h5 class="mb-0">
+          <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+            Log på blokkæde med eksisterende minearbejder-ID
+        </button>
+        </h5>
+      </div>
+      <div id="collapseThree" class="collapse" aria-labelledby="headingThree" data-parent="#accordion">
+        <div class="card-body">
+            <form action="{% url 'bcsim:home' %}" method="post">
+                {% csrf_token %}
+                {{ login_form|crispy }}
+                <div class="d-flex justify-content-center">
+                    <button type="submit" name="login" value ="submit" class="btn btn-outline-primary my-2">Log på blokkæde</button>
+                </div>
+            </form>
+        </div>
+      </div>
+    </div>
+  </div>
 
-{% endblock %}
+{% endif %}
+{% endblock content %}
+
+
+{% block javascript %}
+<script>
+
+{% if expand == 'first' %}
+    document.getElementById('collapseOne').classList.add('show')        
+{% elif expand == 'second' %}
+    document.getElementById('collapseTwo').classList.add('show')        
+{% elif expand == 'third' %}
+    document.getElementById('collapseThree').classList.add('show')            
+{% endif %}
+    
+</script>
+
+{% endblock javascript %}
+
+

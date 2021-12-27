@@ -20,7 +20,7 @@
         </thead>
         <tbody>
             {% for miner in miners %}
-                {% if miner.name == client_miner_name %}
+                {% if miner.name == client.name %}
                     <tr style="background-color: {{ miner.color }}">
                 {% else %}
                     <tr>

@@ -10,7 +10,7 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 from ..models import Blockchain, Block
 from ..forms import BlockchainForm, BlockForm, JoinForm
-from ..views import hash_context
+from ..views import hash_context, next_payload
 from .factories import BlockChainFactory, BlockFactory, BlockFactory, MinerFactory
 import pytest
 from pytest_django.asserts import assertTemplateUsed, assertContains, assertNotContains
@@ -65,7 +65,7 @@ def test_home_view_post_request_join_submit_valid(db, client):
     assert 'miner_id' in client.session
     assert 'blockchain_id' in client.session
     assert len(client.session['blockchain_id']) == 8
-    assert client.session['miner_id'] == 1
+    assert client.session['miner_num'] == 0
 
     # after join-operations the client is redirected to the mining page
     assert response.status_code == 302
@@ -129,9 +129,10 @@ def test_home_view_post_request_create_submit_valid(db, client):
     # correct session data is now createad
     assert 'xxx' not in client.session
     assert 'miner_id' in client.session
+    assert 'miner_num' in client.session
     assert 'blockchain_id' in client.session
     assert len(client.session['blockchain_id']) == 8
-    assert type(client.session['miner_id']) == int
+    assert len(client.session['miner_id']) == 8
     assert client.session['blockchain_id'] == bc.id
 
     # after create-operations the client is redirected to the mining page
@@ -203,6 +204,8 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     The input data gived a valid proof which is reflected in the returned data.
     """
     bc = BlockChainFactory()
+    bc.id = "abcdfgh"
+    bc.save()
     miner = MinerFactory(blockchain=bc)
     block = BlockFactory(blockchain=bc, miner=miner)
     session = client.session
@@ -212,8 +215,7 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
 
     # The user fills out the block form and presses the 'Calculate hash button'
     data = {
-        'payload': '0',
-        'nonce': 123,
+        'nonce': 0,
         'calculate_hash': 'submit'
     }
     response = client.post(reverse('bcsim:mine'), data=data)
@@ -232,16 +234,19 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
         {'block_id': 1,
          'miner': miner,
          'prev_hash': block.hash(),
-         'payload': '0',
-         'nonce': 123})
-    assert expected_cur_hash == response.context['cur_hash']
+         'payload': next_payload(miner.blockchain.id, block.id),
+         'nonce': 0}
+    )
 
-    # Since the calculated hash starts with 2 we have a valid proof
+    assert expected_cur_hash == response.context['cur_hash']
+    assert expected_cur_hash[0] in ['0','1','2']
+
+    # Since the calculated hash starts with 0,1 or 2 we have a valid proof
     assert response.context['valid_proof'] == True
 
     # Since we have valid proof, the context should contain nonce and payload
-    assert response.context['payload'] == '0'
-    assert response.context['nonce'] == '123'
+    assert response.context['payload'] == next_payload(miner.blockchain.id, block.id)
+    assert response.context['nonce'] == '0'
 
     # Since the proof is valid, the reponse should contain an 'Add block to chain' button and a 'refresh' button
     assert 'add_to_chain' in str(response.content)
@@ -252,7 +257,6 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
 
     # The user fills out the block form and presses the 'Calculate hash button'
     data = {
-        'payload': '0',
         'nonce': 'test nonce',
         'add_to_chain': 'submit'
     }
@@ -263,8 +267,7 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
 
     # the new block has the correct attributes
     new_b = Block.objects.get(blockchain=bc, block_id=1)
-    assert(new_b.payload == '0')
-    assert(new_b.nonce == '123')
+    assert(new_b.payload == next_payload(miner.blockchain.id, block.id))
     assert(new_b.miner_id == miner.id)
     assert(new_b.prev_hash == block.hash())
 
@@ -280,6 +283,8 @@ def test_mine_view_calculate_hash_submit_when_proof_is_not_valid(client, db):
     session = client.session
     session['blockchain_id'] = block.blockchain.id
     session['miner_id'] = block.miner.id
+    session['miner_num'] = block.miner.miner_num
+
     session.save()
 
     assert isinstance(block, Block)
@@ -290,7 +295,6 @@ def test_mine_view_calculate_hash_submit_when_proof_is_not_valid(client, db):
 
     # The user fills out the block form and presses the 'Calculate hash button'
     data = {
-        'payload': 'test payload',
         'nonce': 1234567892,
         'calculate_hash': 'submit'
     }
@@ -311,7 +315,7 @@ def test_mine_view_calculate_hash_submit_when_proof_is_not_valid(client, db):
         {'block_id': 1,
          'miner': miner,
          'prev_hash': block.hash(),
-         'payload': 'test payload',
+         'payload': next_payload(miner.blockchain.id, block.id),
          'nonce': 1234567892})
     assert expected_cur_hash == response.context['cur_hash']
 
@@ -331,10 +335,10 @@ def test_logout_view(client, db):
     block = BlockFactory()
     session = client.session
     session['blockchain_id'] = block.blockchain.id
-    session['miner_id'] = 'dd3cdd'
+    session['miner_num'] = 3
     session.save()
 
-    response = client.post(reverse('bcsim:logout'))
+    response = client.get(reverse('bcsim:logout'))
 
     assert response.status_code == 302
     assert (response['Location'] == reverse('bcsim:home'))
