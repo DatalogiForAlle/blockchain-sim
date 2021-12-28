@@ -9,17 +9,16 @@
 <h4 class="mb-4">Velkommen til Blockchain-Sim</h4>
 
 {% if miner %}
-    <!-- Inform users who have already joined a blockchain -->
-    <div class="alert alert-info">
-        Du deltager allerede i en blokkæde!<br>
-        Blokkædens ID er {{ miner.blockchain.id }}.<br>
-        Dit minearbejder-ID er {{ miner.id}}.<br>
-        Dit navn/hold-navn er {{ miner.name}}. <br>
-        Gå tilbage til <a href="{% url 'bcsim:mine' %}">din blokkæde</a>.
-    </div>
-    <div class="alert alert-warning">
-        Hvis du ønsker at deltage i eller oprette en anden blokklæde, så skal du først <a href = "{% url 'bcsim:logout' %}">forlade din blokkæde</a>.
-    </div>
+
+  <div class="alert alert-info" >
+    Du er logget på blokkæden "{{ miner.blockchain.title }}" (blokkæde-ID = {{ miner.blockchain.id }}).<br>
+    Dit minearbejdernavn/holdnavn er "{{ miner.name}}" (minearbejder-ID = {{ miner.id }}).<br>
+    Gå tilbage til <a href="{% url 'bcsim:mine' %}">minedriften</a> på denne blokkæde.
+  </div>
+
+  <div class="alert alert-warning">
+      Hvis du ønsker at deltage i eller oprette en anden blokklæde, så skal du først <a href = "{% url 'bcsim:logout' %}">logge af</a> blokkæden med ID = {{ miner.blockchain.id }}.
+  </div>
 
     
 {% else %} 

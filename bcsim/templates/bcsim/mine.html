@@ -24,12 +24,12 @@
     <div class="col col-12 col-lg-6">
        
         <div class="card" >
-            <div class="card-header" style="background-color: {{ miner.color}}">
+            <div class="card-header">
                 Minedrift
             </div>            
             <div class="card-body">
                 <p class="pb-1 mb-1">Blok-ID: {{ block_id }}</p> 
-                <p class="pb-1 mb-1">Minearbejder: {{ miner.name }}</p>
+                <p class="pb-1 mb-1">Minearbejder: <span class="px-3" style="background-color: {{ miner.color}}">{{ miner.name }}</span></p>
                 <p class="pb-1 mb-1">Seneste hash: <small>{{ prev_hash }}</small></p>
                 <p class="pb-1 mb-1">Payload: {{ payload }} </p>
                 {% if valid_proof %}
