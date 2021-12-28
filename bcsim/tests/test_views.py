@@ -203,9 +203,7 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     A logged in client fills out the mining form and presses the 'calculate hash' button.
     The input data gived a valid proof which is reflected in the returned data.
     """
-    bc = BlockChainFactory()
-    bc.id = "abcdfgh"
-    bc.save()
+    bc = BlockChainFactory(id = "abcdfgh")
     miner = MinerFactory(blockchain=bc)
     block = BlockFactory(blockchain=bc, miner=miner)
     session = client.session
@@ -277,7 +275,10 @@ def test_mine_view_calculate_hash_submit_when_proof_is_not_valid(client, db):
     A logged in client fills out the mining form and presses the 'calculate hash' button.
     The input data does not give valid proof which is reflected in the returned data.
     """
-    miner = MinerFactory(blockchain = BlockChainFactory())
+    miner = MinerFactory(blockchain = BlockChainFactory(id="abcdefgh"), id="abcdefgh")
+    assert miner.id == 'abcdefgh'
+    assert miner.blockchain.id == 'abcdefgh'
+
     block = BlockFactory(miner=miner, blockchain = miner.blockchain)
 
     session = client.session

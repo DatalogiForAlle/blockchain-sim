@@ -15,7 +15,6 @@ class MinerFactory(factory.django.DjangoModelFactory):
     """ Miner factory """
     class Meta:
         model = Miner
-    id = 'abcdfegh'
     name = 'Bob'
     miner_num = 0
 
