@@ -68,13 +68,14 @@ def participants_view(request):
 def logout_view(request):
     """ Destroy session variables, and return to home view """
     blockchain_id = request.session['blockchain_id']
-    
+    miner_id = request.session['miner_id']
+
     # delete all session variables
     del_session_vars(MINER_VARS, request)
     del_session_vars(VALID_PROOF_VARS, request)
 
     messages.info(
-        request, f"Du forlod blokkæden med ID {blockchain_id}.")
+        request, f"Du forlod blokkæden med ID {blockchain_id}. Dit minearbejder-ID var {miner_id}.")
 
     return redirect(reverse('bcsim:home'))
 
@@ -137,7 +138,7 @@ def home_view(request):
 
                 # create new blockchain
                 new_blockchain = create_form.save()
-                
+
                 # create miner
                 creator = Miner.objects.create(name=create_form.cleaned_data['creator_name'], blockchain=new_blockchain, miner_num=0, creator=True)
                 request.session['miner_id'] = creator.id
@@ -254,13 +255,27 @@ def mine_view(request):
                 form = BlockForm(request.POST)
 
                 if form.is_valid():
+                    print("DIFFICULTY", blockchain.difficulty)
+                    print("LEVEL.MEDIUM", Blockchain.Level.MEDIUM)
+
                     nonce = form.cleaned_data['nonce']
                     context['nonce'] = nonce
 
                     cur_hash = hash_context(context)
                     context['cur_hash'] = cur_hash
 
-                    if cur_hash[0] in list("012"):
+                    easy_valid = blockchain.difficulty = Blockchain.Level.NEM and cur_hash[0] in list("012")
+                    print("easy_valid", easy_valid)
+
+                    medium_valid = blockchain.difficulty = Blockchain.Level.MEDIUM and cur_hash[0] == "0"
+                    print("medium_valid", medium_valid)
+
+                    hard_valid = blockchain.difficulty = Blockchain.Level.SVÆR and cur_hash[0:2] == "00"
+                    print("har_valid", hard_valid)
+                    valid_proof = easy_valid or medium_valid or hard_valid
+                    
+                    if valid_proof:
+
                         context['valid_proof'] = True
                         request.session['valid_proof'] = True
                         request.session['valid_proof_block_id'] = block_id
@@ -287,9 +302,19 @@ def mine_view(request):
                     payload=request.session['valid_proof_payload'],
                     nonce=request.session['valid_proof_nonce'],
                 )
+                print("DIFFICULTY", blockchain.difficulty)
+                print("LEVEL.NEM", Blockchain.Level.NEM)
 
-                assert new_block.hash()[0] in list(
-                    "012"), f"Invalid block caught before saving to database: {new_block.hash()}"
+                if blockchain.difficulty == Blockchain.Level.NEM:
+                    assert new_block.hash()[0] in list(
+                        "012"), f"Invalid    block caught before saving to database: {new_block.hash()}"
+                if blockchain.difficulty == Blockchain.Level.MEDIUM:
+                    print("HEJ", new_block.hash()[0])
+                    assert new_block.hash()[0] == "0", f"Invalid block caught before saving to database: {new_block.hash()}"
+                if blockchain.difficulty == Blockchain.Level.SVÆR:
+                    assert new_block.hash()[0:2][
+                        0] == "00", f"Invalid block caught before saving to database: {new_block.hash()}"
+
                 assert new_block.prev_hash == last_block.hash(
                 ), f"Prev_hash of new block does not match hash of last block. Error caught before saving to db."
 

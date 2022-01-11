@@ -14,11 +14,15 @@ class BlockchainForm(forms.ModelForm):
     """ Form used to create a blockchain """
     class Meta:
         model = Blockchain
-        fields = ['creator_name','title']
-        labels = {'creator_name': 'Dit navn/holdnavn', 'title': 'Hvad skal vi kalde blokkæden?', }
-        widgets = {
-            'title': forms.TextInput(attrs={'placeholder': "2A's chatbeskeder"}),
-        }
+        fields = ['creator_name','title', 'difficulty']
+        labels = {
+            'creator_name': 'Dit navn/holdnavn', 
+            'title': 'Hvad skal vi kalde blokkæden?', 
+            'difficulty': 'Sværhedsgrad',
+            }
+        help_texts = {
+            'difficulty': 'Hvor svært skal det være at føje blokke til kæden?'}
+
 
 
 class JoinForm(forms.ModelForm):
@@ -101,3 +105,4 @@ class LoginForm(forms.Form):
             raise forms.ValidationError(
                 'Der findes ingen minearbejder med dette ID.')
         return miner_id
+

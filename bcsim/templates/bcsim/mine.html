@@ -15,7 +15,6 @@
         value="{% if request.is_secure %}https{% else %}http{% endif %}://{{ request.get_host }}{% url 'bcsim:home' %}?blockchain_id={{ blockchain.id }}" id="join_link" style="width:350px">
     <button class="btn btn-primary btn-sm" onclick="copy_link('join_link')">Kopier</button>
 </div>
-
 {% endif %}
 
 

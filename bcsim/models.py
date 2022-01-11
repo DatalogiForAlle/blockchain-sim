@@ -19,8 +19,17 @@ class Blockchain(models.Model):
 
     id = models.CharField(max_length=16, primary_key=True)
     creator_name = models.CharField(max_length=36,default="Skaber")
-    title = models.CharField(max_length=50)
+    title = models.CharField(max_length=50, default="Transaktioner")
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Level(models.IntegerChoices):
+        NEM = 1
+        MEDIUM = 2
+        SVÆR = 3
+
+    difficulty = models.PositiveSmallIntegerField(
+        choices=Level.choices, default=Level.MEDIUM
+    )
 
     def __str__(self):
         return str(self.id)
@@ -120,6 +129,15 @@ class Block(models.Model):
         return hash
 
     def valid(self):
+        # refactor -same kode in view (læg metoden på blokkæden i stedet)
         hash = self.hash()
-        if hash[0] in list("012"):
-            return True
+
+        easy_valid = self.blockchain.difficulty = Blockchain.Level.NEM and hash[0] in list(
+            "012")
+        medium_valid = self.blockchain.difficulty = Blockchain.Level.MEDIUM and hash[0] in list(
+            "0")
+        hard_valid = self.blockchain.difficulty = Blockchain.Level.SVÆR and hash[0] in list(
+            "00")
+        valid_proof = easy_valid or medium_valid or hard_valid
+
+        return valid_proof
