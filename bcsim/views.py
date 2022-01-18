@@ -31,7 +31,7 @@ def next_payload(blockchain_id, block_id):
 
     amount = random.randint(1, 100)
 
-    return f"{amount} diku-dollars fra {sender} til {recipient}"
+    return f"{amount} DIKU-coins fra {sender} til {recipient}"
 
 def del_session_vars(session_vars, request):
     for var in session_vars:
@@ -75,7 +75,7 @@ def logout_view(request):
     del_session_vars(VALID_PROOF_VARS, request)
 
     messages.info(
-        request, f"Du forlod blokkæden med ID {blockchain_id}. Dit minearbejder-ID var {miner_id}.")
+        request, f"Du forlod blockchainen med ID={blockchain_id}. Dit minearbejder-ID var {miner_id}.")
 
     return redirect(reverse('bcsim:home'))
 
@@ -122,7 +122,7 @@ def home_view(request):
                 request.session['miner_num'] = new_miner.miner_num
                 request.session['blockchain_id'] = request.POST['blockchain_id']
 
-                messages.success(request, "Du deltager nu i en blokkæde!")
+                messages.success(request, "Du deltager nu i en blockchain!")
 
                 # redirect to mining page
                 return redirect(reverse('bcsim:mine'))
@@ -154,7 +154,7 @@ def home_view(request):
                     nonce="0",
                     prev_hash="0",
                 )
-                messages.success(request, f"Du har startet en ny blokkæde!")
+                messages.success(request, f"Du har startet en ny blockchain!")
  
                 # redirect to mining page
                 return redirect(reverse('bcsim:mine'))
@@ -177,7 +177,7 @@ def home_view(request):
                 request.session['miner_num'] = miner.miner_num
                 request.session['blockchain_id'] = request.POST['blockchain_id']
 
-                messages.success(request, "Du deltager nu i en blokkæde!")
+                messages.success(request, "Du deltager nu i en blockchain!")
 
                 # redirect to mining page
                 return redirect(reverse('bcsim:mine'))
@@ -248,11 +248,24 @@ def mine_view(request):
 
         if request.method == "POST":
 
+            if 'pause_blockchain' in request.POST:
+                blockchain.paused = True
+                blockchain.save()
+                return redirect(reverse('bcsim:mine'))
+
+            if 'un_pause_blockchain' in request.POST:
+                blockchain.paused = False
+                blockchain.save()
+                return redirect(reverse('bcsim:mine'))
+
             if 'refresh' in request.POST:
                 del_session_vars(VALID_PROOF_VARS, request)
                 return redirect(reverse('bcsim:mine'))
 
-            if 'calculate_hash' in request.POST:
+            if 'calculate_hash' in request.POST and blockchain.paused:
+                pass
+
+            if 'calculate_hash' in request.POST and not blockchain.paused:
                 
                 form = BlockForm(request.POST)
 
@@ -312,16 +325,14 @@ def mine_view(request):
                 miner.save()
 
                 messages.success(
-                    request, "Du har tilføjet en blok til kæden!")
+                    request, "Du har tilføjet en blok til blockchainen!")
 
                 del_session_vars(VALID_PROOF_VARS, request)
 
                 return redirect(reverse('bcsim:mine'))
 
         context['form'] = form
-        print("before render", context['blockchain'].difficulty)
-        print(context['blockchain'] )
-
+      
         return render(request, 'bcsim/mine.html', context)
 
 

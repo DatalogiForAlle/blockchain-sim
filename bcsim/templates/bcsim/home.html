@@ -11,13 +11,13 @@
 {% if miner %}
 
   <div class="alert alert-info" >
-    Du er logget på blokkæden "{{ miner.blockchain.title }}" (blokkæde-ID = {{ miner.blockchain.id }}).<br>
+    Du er logget på blockchainen "{{ miner.blockchain.title }}" (blockchain ID = {{ miner.blockchain.id }}).<br>
     Dit minearbejdernavn/holdnavn er "{{ miner.name}}" (minearbejder-ID = {{ miner.id }}).<br>
-    Gå tilbage til <a href="{% url 'bcsim:mine' %}">minedriften</a> på denne blokkæde.
+    Gå tilbage til <a href="{% url 'bcsim:mine' %}">minedriften</a> på denne blockchain.
   </div>
 
   <div class="alert alert-warning">
-      Hvis du ønsker at deltage i eller oprette en anden blokklæde, så skal du først <a href = "{% url 'bcsim:logout' %}">logge af</a> blokkæden med ID = {{ miner.blockchain.id }}.
+      Hvis du ønsker at deltage i eller oprette en anden blockchain, så skal du først <a href = "{% url 'bcsim:logout' %}">logge af</a> blockchainen med ID = {{ miner.blockchain.id }}.
   </div>
 
     
@@ -27,7 +27,7 @@
       <div class="card-header" id="headingOne">
         <h5 class="mb-0">
           <button class="btn btn-link" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
-            Skab ny blokkæde
+            Skab ny blockchain
           </button>
         </h5>
       </div>
@@ -38,7 +38,7 @@
                 {% csrf_token %}
                 {{ create_form|crispy }}
                 <div class="d-flex justify-content-center">
-                    <button type="submit" name="create_bc" value ="submit" class="btn btn-outline-primary my-2">Skab blokkæde</button>
+                    <button type="submit" name="create_bc" value ="submit" class="btn btn-outline-primary my-2">Skab blockchain</button>
                 </div>
             </form>
         </div>
@@ -49,7 +49,7 @@
       <div class="card-header" id="headingTwo">
         <h5 class="mb-0">
           <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
-            Opret ny minearbejder i eksisterende blokkæde
+            Opret ny minearbejder i eksisterende blockchain
           </button>
         </h5>
       </div>
@@ -70,7 +70,7 @@
       <div class="card-header" id="headingThree">
         <h5 class="mb-0">
           <button class="btn btn-link collapsed" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
-            Log på blokkæde med eksisterende minearbejder-ID
+            Log på blockchain med eksisterende minearbejder-ID
         </button>
         </h5>
       </div>
@@ -80,7 +80,7 @@
                 {% csrf_token %}
                 {{ login_form|crispy }}
                 <div class="d-flex justify-content-center">
-                    <button type="submit" name="login" value ="submit" class="btn btn-outline-primary my-2">Log på blokkæde</button>
+                    <button type="submit" name="login" value ="submit" class="btn btn-outline-primary my-2">Log på blockchain</button>
                 </div>
             </form>
         </div>

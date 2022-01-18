@@ -16,15 +16,15 @@ class BlockchainForm(forms.ModelForm):
         model = Blockchain
         fields = ['title', 'difficulty','creator_name']
         labels = {
-            'title': 'Hvad skal vi kalde blokkæden?', 
+            'title': 'Hvad skal vi kalde din blockchain?', 
             'difficulty': 'Sværhedsgrad',
             'creator_name': 'Dit navn/holdnavn',
             }
         help_texts = {
-            'creator_name': 'Du deltager automatisk som minearbejder i din egen blokkæde. Det er dit minearbejdernavn/holdnavn, du vælger her',
-            'title': 'Blokkædens navn vil stå øverst som titel på blokkæden',
+            'creator_name': 'Du deltager automatisk som minearbejder i din egen blockchain. Det er dit minearbejdernavn/holdnavn, du vælger her',
+            'title': 'Titlen, du vælger her, vil fremgå på alle ',
             'difficulty': 
-                'Hvor svært skal det være at føje blokke til kæden?<br>' +
+                'Hvor svært skal det være at føje blokke til din blockchain?<br>' +
                 ' - Nem: Gyldige hashes starter med 0 eller 1<br>' +
                 ' - Middel: Gyldige hashes starter med 0<br>' +
                 ' - Svær: Gyldige hashes starter med 00' 
@@ -33,8 +33,8 @@ class BlockchainForm(forms.ModelForm):
 
 class JoinForm(forms.ModelForm):
     """ Form used to join a blockchain """
-    blockchain_id = forms.CharField(max_length=8, label="Blokkæde-ID",
-                                help_text="Indtast ID'et på den blokkæde, du vil deltage i")
+    blockchain_id = forms.CharField(max_length=8, label="Blockchain ID",
+                                help_text="Indtast ID'et på den blockchain, du vil deltage i")
 
     class Meta:
         model = Miner
@@ -43,7 +43,7 @@ class JoinForm(forms.ModelForm):
             'name': 'Dit navn/holdnavn',
         }
         help_texts = {
-            'name': 'Navnet, du vælger her, vil være synligt for de andre deltagere i blokkæden',
+            'name': 'Navnet, du vælger her, vil være synligt for de andre deltagere i blockchainen',
         }
 
     def clean_blockchain_id(self):
@@ -51,7 +51,7 @@ class JoinForm(forms.ModelForm):
         blockchain_id = self.cleaned_data['blockchain_id'].lower()
         if not Blockchain.objects.filter(id=blockchain_id).exists():
             raise forms.ValidationError(
-                'Der findes ingen blokkæde med dette ID.')
+                'Der findes ingen blockchain med dette ID.')
         return blockchain_id
 
     def clean(self):
@@ -66,7 +66,7 @@ class JoinForm(forms.ModelForm):
             blockchain = Blockchain.objects.get(id=cleaned_blockchain_id)
             if Miner.objects.filter(name=cleaned_name, blockchain=blockchain).exists():
                 raise forms.ValidationError(
-                    'Der er allerede en minearbejder med dette navn i blokkæden. Vælg et andet navn.')
+                    'Der er allerede en minearbejder med dette navn i blockchainen. Vælg et andet navn.')
         return cleaned_data
 
 
@@ -90,8 +90,8 @@ class BlockForm(forms.ModelForm):
 class LoginForm(forms.Form):
     """ Form to login to existing block as existing user """
 
-    blockchain_id = forms.CharField(max_length=8, label="Blokkæde-ID",
-                                    help_text="Indtast blokkædens ID")
+    blockchain_id = forms.CharField(max_length=8, label="Blockchain ID",
+                                    help_text="Indtast blockchainens ID")
     
     miner_id = forms.CharField(max_length=8, label="Minearbejder-ID",
                                help_text="Indtast dit minearbejder-ID")
@@ -101,7 +101,7 @@ class LoginForm(forms.Form):
         blockchain_id = self.cleaned_data['blockchain_id'].lower()
         if not Blockchain.objects.filter(id=blockchain_id).exists():
             raise forms.ValidationError(
-                'Der findes ingen blokkæde med dette ID.')
+                'Der findes ingen blockchain med dette ID.')
         return blockchain_id
 
     def clean_miner_id(self):

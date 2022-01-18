@@ -22,6 +22,7 @@ class Blockchain(models.Model):
     creator_name = models.CharField(max_length=36,default="Skaber")
     title = models.CharField(max_length=50, default="Transaktioner")
     created_at = models.DateTimeField(auto_now_add=True)
+    paused = models.BooleanField(default=False)
 
     class Level(models.IntegerChoices):
         NEM = 1
@@ -150,7 +151,7 @@ class Block(models.Model):
         return hash
 
     def valid(self):
-        # refactor -same kode in view (læg metoden på blokkæden i stedet)
+        # refactor -same kode in view (læg metoden på blockchainen i stedet)
         hash = self.hash()
 
         easy_valid = self.blockchain.difficulty = Blockchain.Level.NEM and hash[0] in list(

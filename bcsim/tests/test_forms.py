@@ -90,7 +90,7 @@ def test_join_form_with_invalid_data_is_invalid(db):
     form = JoinForm(data=data)
 
     assert not form.is_valid()
-    assert 'Der findes ingen blokkæde med dette ID.' in form.errors['blockchain_id']
+    assert 'Der findes ingen blockchain med dette ID.' in form.errors['blockchain_id']
 
 def test_join_form_name_is_required(db):
     data = {
@@ -123,7 +123,7 @@ def test_name_has_to_be_unique_on_blockchain(db):
     form = JoinForm(data=data)
 
     assert not form.is_valid()
-    assert "Der er allerede en minearbejder med dette navn i blokkæden." in str(
+    assert "Der er allerede en minearbejder med dette navn i blockchainen." in str(
         form)
 
 def test_name_used_on_another_blockchain_is_not_a_problem(db):
