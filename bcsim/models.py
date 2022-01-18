@@ -1,6 +1,4 @@
-from operator import truediv
 from django.db import models
-from datetime import datetime
 import secrets
 import hashlib
 import random
@@ -17,7 +15,6 @@ def new_unique_blockchain_id():
 
 
 class Blockchain(models.Model):
-
     id = models.CharField(max_length=16, primary_key=True)
     creator_name = models.CharField(max_length=36,default="Skaber")
     title = models.CharField(max_length=50, default="Transaktioner")
@@ -53,6 +50,7 @@ class Blockchain(models.Model):
 
     def __str__(self):
         return str(self.id)
+
 
     def save(self, *args, **kwargs):
         """
@@ -141,7 +139,7 @@ class Block(models.Model):
     payload = models.CharField(max_length=200)
 
     # Nonce has to be an integer, but to be able to store very big integers, we save it as a string.
-    nonce = models.CharField(max_length=60, null=True, blank=True)
+    nonce = models.CharField(max_length=60, null=True)
 
     prev_hash = models.CharField(max_length=200)
 
