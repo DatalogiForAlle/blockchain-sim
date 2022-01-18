@@ -15,7 +15,7 @@ import pytest
 
 def test_blockchain_form_can_create(db):
     """ Submitting a valid blockchain form creates a blockchain."""
-    data = {'creator_name': 'Jane', 'title': 'bc title'}
+    data = {'creator_name': 'Jane', 'title': 'bc title', 'difficulty':2}
     form = BlockchainForm(data=data)
 
     assert form.is_valid()
@@ -26,7 +26,7 @@ def test_blockchain_form_can_create(db):
 
 def test_blockchain_form_title_is_required(db):
     """ Blockchain form without title or creator name is invalid."""
-    data = {'title': '', 'creator_name': ''}
+    data = {'title': '', 'creator_name': '', 'difficulty':2}
     form = BlockchainForm(data=data)
 
     assert not form.is_valid()
@@ -90,7 +90,7 @@ def test_join_form_with_invalid_data_is_invalid(db):
     form = JoinForm(data=data)
 
     assert not form.is_valid()
-    assert 'Der findes ingen blokkæde med dette ID.' in form.errors['blockchain_id']
+    assert 'Der findes ingen blockchain med dette ID.' in form.errors['blockchain_id']
 
 def test_join_form_name_is_required(db):
     data = {
@@ -123,7 +123,7 @@ def test_name_has_to_be_unique_on_blockchain(db):
     form = JoinForm(data=data)
 
     assert not form.is_valid()
-    assert "Der er allerede en minearbejder med dette navn i blokkæden." in str(
+    assert "Der er allerede en minearbejder med dette navn i blockchainen." in str(
         form)
 
 def test_name_used_on_another_blockchain_is_not_a_problem(db):

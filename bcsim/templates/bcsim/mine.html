@@ -1,31 +1,54 @@
 {% extends "bcsim/base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}Mine{% endblock %}
+{% block title %}Minedrift{% endblock %}
+
 
 {% block content %}
 
-<h4 class="mb-4"><span class="text-black-50">Blokkæde [{{ blockchain.id }}]</span>: {{ blockchain.title }}</h4>      
-
-{% if miner.creator %}
-<h6>Inviter nye deltagere/hold til blokkæden</h6>
-
-<div class="d-flex mb-4">
-    <input class="form-control" type="text" 
-        value="{% if request.is_secure %}https{% else %}http{% endif %}://{{ request.get_host }}{% url 'bcsim:home' %}?blockchain_id={{ blockchain.id }}" id="join_link" style="width:350px">
-    <button class="btn btn-primary btn-sm" onclick="copy_link('join_link')">Kopier</button>
-</div>
-
+{% if blockchain.paused %}
+    <p class="alert alert-warning">
+        Minedrift er sat på pause af skaberen af denne blockchain
+    </p>
 {% endif %}
 
+<h4 class="mb-4"><span class="text-black-50">Blockchain [{{ blockchain.id }}]</span>: {{ blockchain.title }}</h4>      
+
+{% if miner.creator %}
+    <form action="" method="POST">
+        {% csrf_token %}
+        <div class="d-flex justify-content-center">
+            {% if blockchain.paused %}
+                <button type="submit" name="un_pause_blockchain" value="submit" class="btn btn-primary">
+                    Genstart minedrift</button>
+            {% else %}
+                <button type="submit" name="pause_blockchain" value="submit" class="btn btn-warning">
+                    Sæt minedrift på pause
+                </button>
+            {% endif %}
+        </div>
+    </form>
+{% endif %}
+
+<p>
+    <i>
+    {% if blockchain.difficulty == blockchain.Level.NEM %}
+        Gyldige hashes starter med 0 eller 1
+    {% elif blockchain.difficulty == blockchain.Level.MEDIUM %}
+        Gyldige hashes starter med 0
+    {% elif blockchain.difficulty == blockchain.Level.SVÆR %}
+        Gyldige hashes starter med 00
+    {% endif %}
+    </i>
+</p>
 
 
 <div class="row mb-5">
     <div class="col col-12 col-lg-6">
        
-        <div class="card" >
+        <div class="card">
             <div class="card-header">
-                Minedrift
+                Minedrift 
             </div>            
             <div class="card-body">
                 <p class="pb-1 mb-1">Blok-ID: {{ block_id }}</p> 
@@ -52,7 +75,7 @@
                         <form action="" method="POST">
                             {% csrf_token %}
                             <div class="d-flex justify-content-center mb-2">
-                                <button type="submit" name="add_to_chain" value="submit" class="btn btn-outline-primary">Tilføj til blokkæde</button>
+                                <button type="submit" name="add_to_chain" value="submit" class="btn btn-outline-primary">Tilføj til blockchain</button>
                             </div>
                         </form>
                     </div>
@@ -77,7 +100,6 @@
             {% endif %}
         {% endif %}    
     </div> 
- 
 
     <!-- Column with list of blocks in chain" -->
     <div class="col col-12 col-lg-6 mt-5 mb-3 my-lg-0" id="block-list">

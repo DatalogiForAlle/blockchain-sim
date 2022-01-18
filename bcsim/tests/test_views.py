@@ -3,7 +3,7 @@ To run all tests in this file:
 make test_views 
 
 To run only one or some tests:
-docker-compose -f docker-compose.dev.yml run web pytes -k <substring of test function names to run>
+docker-compose -f docker-compose.dev.yml run web pytest -k <substring of test function names to run>
 """
 
 from django.core.exceptions import ValidationError
@@ -97,7 +97,7 @@ def test_home_view_post_request_join_submit_invalid(db, client):
 
     # The join form contains an appropriate error message
     join_form = response.context['join_form']
-    assert 'Der findes ingen blokkæde med dette ID.' in str(join_form)
+    assert 'Der findes ingen blockchain med dette ID.' in str(join_form)
 
 
 def test_home_view_post_request_create_submit_valid(db, client):
@@ -110,7 +110,8 @@ def test_home_view_post_request_create_submit_valid(db, client):
     data = {
         'creator_name': 'Bobby',
         'title': 'bc title',
-        'create_bc': 'submit'
+        'create_bc': 'submit',
+        'difficulty': 2
     }
 
     response = client.post(reverse('bcsim:home'), data=data)
@@ -203,7 +204,7 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     A logged in client fills out the mining form and presses the 'calculate hash' button.
     The input data gived a valid proof which is reflected in the returned data.
     """
-    bc = BlockChainFactory(id = "abcdfgh")
+    bc = BlockChainFactory(id = "abcdfgh", difficulty=1)
     miner = MinerFactory(blockchain=bc)
     block = BlockFactory(blockchain=bc, miner=miner)
     session = client.session
@@ -211,9 +212,10 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     session['miner_id'] = block.miner.id
     session.save()
 
+    nonce = 34
     # The user fills out the block form and presses the 'Calculate hash button'
     data = {
-        'nonce': 0,
+        'nonce': nonce,
         'calculate_hash': 'submit'
     }
     response = client.post(reverse('bcsim:mine'), data=data)
@@ -233,18 +235,18 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
          'miner': miner,
          'prev_hash': block.hash(),
          'payload': next_payload(miner.blockchain.id, block.id),
-         'nonce': 0}
+         'nonce': nonce}
     )
 
     assert expected_cur_hash == response.context['cur_hash']
-    assert expected_cur_hash[0] in ['0','1','2']
+    assert expected_cur_hash[0] in ['0','1']
 
-    # Since the calculated hash starts with 0,1 or 2 we have a valid proof
+    # Since the calculated hash starts with 0 or 1 and the level is easy, we have a valid proof
     assert response.context['valid_proof'] == True
 
     # Since we have valid proof, the context should contain nonce and payload
     assert response.context['payload'] == next_payload(miner.blockchain.id, block.id)
-    assert response.context['nonce'] == '0'
+    assert response.context['nonce'] == str(nonce)
 
     # Since the proof is valid, the reponse should contain an 'Add block to chain' button and a 'refresh' button
     assert 'add_to_chain' in str(response.content)
@@ -337,6 +339,8 @@ def test_logout_view(client, db):
     session = client.session
     session['blockchain_id'] = block.blockchain.id
     session['miner_num'] = 3
+    session['miner_id'] = 9
+
     session.save()
 
     response = client.get(reverse('bcsim:logout'))
