@@ -19,10 +19,11 @@
         {% csrf_token %}
         <div class="d-flex justify-content-center">
             {% if blockchain.paused %}
-                <button type="submit" name="un_pause_blockchain" value="submit" class="btn btn-primary">
-                    Genstart minedrift</button>
+                <button type="submit" name="un_pause_blockchain" value="submit" class="btn btn-secondary">
+                    Genstart minedrift
+                </button>
             {% else %}
-                <button type="submit" name="pause_blockchain" value="submit" class="btn btn-warning">
+                <button type="submit" name="pause_blockchain" value="submit" class="btn btn-secondary">
                     Sæt minedrift på pause
                 </button>
             {% endif %}
