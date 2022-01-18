@@ -9,6 +9,7 @@ class BlockChainFactory(factory.django.DjangoModelFactory):
         model = Blockchain
     title = 'Blockchain test title'
     creator_name = 'skaber'
+    difficulty = 2
 
 
 class MinerFactory(factory.django.DjangoModelFactory):

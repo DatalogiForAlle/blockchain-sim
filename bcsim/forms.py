@@ -14,15 +14,21 @@ class BlockchainForm(forms.ModelForm):
     """ Form used to create a blockchain """
     class Meta:
         model = Blockchain
-        fields = ['creator_name','title', 'difficulty']
+        fields = ['title', 'difficulty','creator_name']
         labels = {
-            'creator_name': 'Dit navn/holdnavn', 
             'title': 'Hvad skal vi kalde blokkæden?', 
             'difficulty': 'Sværhedsgrad',
+            'creator_name': 'Dit navn/holdnavn',
             }
         help_texts = {
-            'difficulty': 'Hvor svært skal det være at føje blokke til kæden?'}
-
+            'creator_name': 'Du deltager automatisk som minearbejder i din egen blokkæde. Det er dit minearbejdernavn/holdnavn, du vælger her',
+            'title': 'Blokkædens navn vil stå øverst som titel på blokkæden',
+            'difficulty': 
+                'Hvor svært skal det være at føje blokke til kæden?<br>' +
+                ' - Nem: Gyldige hashes starter med 0 eller 1<br>' +
+                ' - Middel: Gyldige hashes starter med 0<br>' +
+                ' - Svær: Gyldige hashes starter med 00' 
+            }
 
 
 class JoinForm(forms.ModelForm):

@@ -216,8 +216,10 @@ def hash_context(context):
 
 
 def mine_view(request):
+
     try:
         miner = Miner.objects.get(id=request.session['miner_id'])
+
     except:
         # if client does not have a session, return to home:
         return redirect(reverse('bcsim:home'))
@@ -251,30 +253,18 @@ def mine_view(request):
                 return redirect(reverse('bcsim:mine'))
 
             if 'calculate_hash' in request.POST:
-
+                
                 form = BlockForm(request.POST)
 
                 if form.is_valid():
-                    print("DIFFICULTY", blockchain.difficulty)
-                    print("LEVEL.MEDIUM", Blockchain.Level.MEDIUM)
-
+            
                     nonce = form.cleaned_data['nonce']
                     context['nonce'] = nonce
 
                     cur_hash = hash_context(context)
                     context['cur_hash'] = cur_hash
 
-                    easy_valid = blockchain.difficulty = Blockchain.Level.NEM and cur_hash[0] in list("012")
-                    print("easy_valid", easy_valid)
-
-                    medium_valid = blockchain.difficulty = Blockchain.Level.MEDIUM and cur_hash[0] == "0"
-                    print("medium_valid", medium_valid)
-
-                    hard_valid = blockchain.difficulty = Blockchain.Level.SVÆR and cur_hash[0:2] == "00"
-                    print("har_valid", hard_valid)
-                    valid_proof = easy_valid or medium_valid or hard_valid
-                    
-                    if valid_proof:
+                    if blockchain.hash_is_valid(cur_hash):
 
                         context['valid_proof'] = True
                         request.session['valid_proof'] = True
@@ -302,15 +292,12 @@ def mine_view(request):
                     payload=request.session['valid_proof_payload'],
                     nonce=request.session['valid_proof_nonce'],
                 )
-                print("DIFFICULTY", blockchain.difficulty)
-                print("LEVEL.NEM", Blockchain.Level.NEM)
-
+             
                 if blockchain.difficulty == Blockchain.Level.NEM:
                     assert new_block.hash()[0] in list(
                         "012"), f"Invalid    block caught before saving to database: {new_block.hash()}"
                 if blockchain.difficulty == Blockchain.Level.MEDIUM:
-                    print("HEJ", new_block.hash()[0])
-                    assert new_block.hash()[0] == "0", f"Invalid block caught before saving to database: {new_block.hash()}"
+                        assert new_block.hash()[0] == "0", f"Invalid block caught before saving to database: {new_block.hash()}"
                 if blockchain.difficulty == Blockchain.Level.SVÆR:
                     assert new_block.hash()[0:2][
                         0] == "00", f"Invalid block caught before saving to database: {new_block.hash()}"
@@ -332,6 +319,8 @@ def mine_view(request):
                 return redirect(reverse('bcsim:mine'))
 
         context['form'] = form
+        print("before render", context['blockchain'].difficulty)
+        print(context['blockchain'] )
 
         return render(request, 'bcsim/mine.html', context)
 

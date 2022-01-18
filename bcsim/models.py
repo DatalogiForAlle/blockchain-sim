@@ -1,3 +1,4 @@
+from operator import truediv
 from django.db import models
 from datetime import datetime
 import secrets
@@ -28,8 +29,26 @@ class Blockchain(models.Model):
         SVÆR = 3
 
     difficulty = models.PositiveSmallIntegerField(
-        choices=Level.choices, default=Level.MEDIUM
+        choices=Level.choices, 
+        default=Level.MEDIUM
     )
+
+    def hash_is_valid(self, hash):
+
+        if self.difficulty == Blockchain.Level.NEM:
+            if hash[0] in ["0", "1"]:
+                return True
+
+        elif self.difficulty == Blockchain.Level.MEDIUM:
+            if hash[0] == "0":
+                return True
+        
+        elif self.difficulty == Blockchain.Level.SVÆR:
+            if hash[:2] == "00":
+                return True
+
+        return False
+
 
     def __str__(self):
         return str(self.id)
@@ -42,7 +61,9 @@ class Blockchain(models.Model):
             # we are creating a new blockchain (not updating an existing blockchain)
             self.id = new_unique_blockchain_id()
         super(Blockchain, self).save(*args, **kwargs)
-
+    
+    
+                
 
 def new_unique_miner_id():
     """

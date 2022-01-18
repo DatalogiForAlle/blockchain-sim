@@ -15,7 +15,7 @@ import pytest
 
 def test_blockchain_form_can_create(db):
     """ Submitting a valid blockchain form creates a blockchain."""
-    data = {'creator_name': 'Jane', 'title': 'bc title'}
+    data = {'creator_name': 'Jane', 'title': 'bc title', 'difficulty':2}
     form = BlockchainForm(data=data)
 
     assert form.is_valid()
@@ -26,7 +26,7 @@ def test_blockchain_form_can_create(db):
 
 def test_blockchain_form_title_is_required(db):
     """ Blockchain form without title or creator name is invalid."""
-    data = {'title': '', 'creator_name': ''}
+    data = {'title': '', 'creator_name': '', 'difficulty':2}
     form = BlockchainForm(data=data)
 
     assert not form.is_valid()

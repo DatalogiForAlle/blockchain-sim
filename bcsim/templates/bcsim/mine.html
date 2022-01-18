@@ -1,23 +1,24 @@
 {% extends "bcsim/base.html" %}
 {% load crispy_forms_tags %}
 
-{% block title %}Mine{% endblock %}
+{% block title %}Minedrift{% endblock %}
 
 {% block content %}
 
 <h4 class="mb-4"><span class="text-black-50">Blokkæde [{{ blockchain.id }}]</span>: {{ blockchain.title }}</h4>      
 
+<p><i>
+    {% if blockchain.difficulty == blockchain.Level.NEM %}
+        Gyldige hashes starter med 0 eller 1
+    {% elif blockchain.difficulty == blockchain.Level.MEDIUM %}
+        Gyldige hashes starter med 0
+    {% elif blockchain.difficulty == blockchain.Level.SVÆR %}
+        Gyldige hashes starter med 00
+    {% endif %}
+</i></p>
+
 {% if miner.creator %}
-<h6>Inviter nye deltagere/hold til blokkæden</h6>
-
-<div class="d-flex mb-4">
-    <input class="form-control" type="text" 
-        value="{% if request.is_secure %}https{% else %}http{% endif %}://{{ request.get_host }}{% url 'bcsim:home' %}?blockchain_id={{ blockchain.id }}" id="join_link" style="width:350px">
-    <button class="btn btn-primary btn-sm" onclick="copy_link('join_link')">Kopier</button>
-</div>
 {% endif %}
-
-
 
 <div class="row mb-5">
     <div class="col col-12 col-lg-6">
@@ -76,7 +77,6 @@
             {% endif %}
         {% endif %}    
     </div> 
- 
 
     <!-- Column with list of blocks in chain" -->
     <div class="col col-12 col-lg-6 mt-5 mb-3 my-lg-0" id="block-list">
