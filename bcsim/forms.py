@@ -22,14 +22,13 @@ class BlockchainForm(forms.ModelForm):
             }
         help_texts = {
             'creator_name': 'Du deltager automatisk som minearbejder i din egen blockchain. Det er dit minearbejdernavn/holdnavn, du vælger her',
-            'title': 'Titlen, du vælger her, vil fremgå på alle ',
+            'title': 'Titlen, du vælger her, vil fremgå som overskrift på din blockchain',
             'difficulty': 
                 'Hvor svært skal det være at føje blokke til din blockchain?<br>' +
-                ' - Nem: Gyldige hashes starter med 0 eller 1<br>' +
-                ' - Middel: Gyldige hashes starter med 0<br>' +
-                ' - Svær: Gyldige hashes starter med 00' 
+                ' - Nem: Gyldige hashes starter med 0 eller 1 (ca. 12 % af alle forsøg er gyldige)<br>' +
+                ' - Middel: Gyldige hashes starter med 0 (ca. 6% af alle forsøg er gyldige)<br>' +
+                ' - Svær: Gyldige hashes starter med 00 (ca. 0,4% af alle forsøg er gyldige)' 
             }
-
 
 class JoinForm(forms.ModelForm):
     """ Form used to join a blockchain """
@@ -83,7 +82,7 @@ class BlockForm(forms.ModelForm):
         if nonce:
             if not str(nonce).isnumeric():
                 raise forms.ValidationError(
-                    'Nonce skal være et heltal')
+                    'Nonce skal være et ikke-negativt heltal')
         return nonce
 
 
