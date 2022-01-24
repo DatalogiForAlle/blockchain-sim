@@ -200,17 +200,6 @@ def home_view(request):
     return render(request, 'bcsim/home.html', context)
 
 
-def hash_context(context):
-    block = Block(
-        block_num=context['block_num'],
-        miner=context['miner'],
-        prev_hash=context['prev_hash'],
-        payload=context['payload'],
-        nonce=context['nonce']
-    )
-    return block.hash()
-
-
 def mine_view(request):
 
     try:
@@ -249,33 +238,36 @@ def mine_view(request):
                 return redirect(reverse('bcsim:mine'))
             
             if not blockchain.paused:
-
-                form = BlockForm(request.POST)
+                    
                 last_block_num_shown_to_client = request.session['last_block_num_shown_to_client']
-
+                form = BlockForm(request.POST)
                 if form.is_valid():     
-                    nonce = form.cleaned_data['nonce']
-       
+                    
                     # Check if a new block has been added to chain since the valid hash was created
                     if current_block_num != last_block_num_shown_to_client:
                         messages.error(
                             request, f"En anden minearbejder tilføjede blok #{last_block_num_shown_to_client} før dig!")
                         return redirect(reverse('bcsim:mine'))
+                    
+                    nonce = form.cleaned_data['nonce']
+
+                    new_block = Block(
+                        block_num=current_block_num,
+                        blockchain=blockchain,
+                        miner=miner,
+                        prev_hash=prev_hash,
+                        payload=payload,
+                        nonce=nonce,
+                    )
+
                     context['nonce'] = nonce
-                    context['cur_hash'] = hash_context(context)
-                
+
+                    hash, hash_is_valid = new_block.hash_is_valid()
+                    context['cur_hash'] = hash
+
                     if 'add_to_chain' in request.POST:
 
-                        new_block = Block(
-                            block_num=current_block_num,
-                            blockchain=blockchain,
-                            miner=miner,
-                            prev_hash=prev_hash,
-                            payload=payload,
-                            nonce=nonce,
-                        )
-        
-                        if not new_block.hash_is_valid():    
+                        if not hash_is_valid:    
                             messages.error(
                                 request, f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
                         else:

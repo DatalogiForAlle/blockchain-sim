@@ -148,7 +148,7 @@ class Block(models.Model):
 
     def hash_is_valid(self):
         hash = self.hash()
-        return self.blockchain.hash_is_valid(hash)
+        return hash, self.blockchain.hash_is_valid(hash)
 
 
 class Token(models.Model):

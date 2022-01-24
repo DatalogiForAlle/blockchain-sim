@@ -10,11 +10,13 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 from ..models import Blockchain, Block
 from ..forms import BlockchainForm, BlockForm, JoinForm
-from ..views import hash_context, next_payload
+from ..views import next_payload
 from .factories import BlockChainFactory, BlockFactory, BlockFactory, MinerFactory
 import pytest
 from pytest_django.asserts import assertTemplateUsed, assertContains, assertNotContains
 from datetime import datetime
+
+
 
 def test_participants_view(db, client):
     """
@@ -231,14 +233,14 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     assert response.context['blocks'].last() == block
     assert response.context['prev_hash'] == block.hash()
     
-
-    expected_cur_hash = hash_context(
-        {'block_num': 1,
-         'miner': miner,
-         'prev_hash': block.hash(),
-         'payload': next_payload(miner.blockchain.id, block.id),
-         'nonce': nonce}
+    next_block = Block(
+            block_num = 1,
+            miner = miner,
+            prev_hash = block.hash(),
+            payload=next_payload(miner.blockchain.id, block.id),
+            nonce = nonce
     )
+    expected_cur_hash = next_block.hash()
 
     assert expected_cur_hash == response.context['cur_hash']
     assert expected_cur_hash[0] in ['0','1']
