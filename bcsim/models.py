@@ -148,16 +148,4 @@ class Block(models.Model):
         hash = hashlib.sha256(s.encode()).hexdigest()
         return hash
 
-    def valid(self):
-        # refactor -same kode in view (læg metoden på blockchainen i stedet)
-        hash = self.hash()
-
-        easy_valid = self.blockchain.difficulty = Blockchain.Level.NEM and hash[0] in list(
-            "012")
-        medium_valid = self.blockchain.difficulty = Blockchain.Level.MEDIUM and hash[0] in list(
-            "0")
-        hard_valid = self.blockchain.difficulty = Blockchain.Level.SVÆR and hash[0] in list(
-            "00")
-        valid_proof = easy_valid or medium_valid or hard_valid
-
-        return valid_proof
+    
