@@ -5,7 +5,7 @@
 
 
 {% block content %}
-
+{{request.session.}}
 {% if blockchain.paused %}
     <p class="alert alert-warning">
         Minedrift er sat på pause af skaberen af denne blockchain
@@ -33,13 +33,13 @@
 
 <p>
     <i>
-    {% if blockchain.difficulty == blockchain.Level.NEM %}
-        Gyldige hashes starter med 0 eller 1
-    {% elif blockchain.difficulty == blockchain.Level.MEDIUM %}
-        Gyldige hashes starter med 0
-    {% elif blockchain.difficulty == blockchain.Level.SVÆR %}
-        Gyldige hashes starter med 00
-    {% endif %}
+        {% if blockchain.difficulty == blockchain.Level.NEM %}
+            Gyldige hashes starter med 0 eller 1
+        {% elif blockchain.difficulty == blockchain.Level.MEDIUM %}
+            Gyldige hashes starter med 0
+        {% elif blockchain.difficulty == blockchain.Level.SVÆR %}
+            Gyldige hashes starter med 00
+        {% endif %}
     </i>
 </p>
 
@@ -52,54 +52,39 @@
                 Minedrift 
             </div>            
             <div class="card-body">
-                <p class="pb-1 mb-1">Blok-ID: {{ block_id }}</p> 
+                <p class="pb-1 mb-1">Blok #{{ block_num }}</p> 
                 <p class="pb-1 mb-1">Minearbejder: <span class="px-3" style="background-color: {{ miner.color}}">{{ miner.name }}</span></p>
                 <p class="pb-1 mb-1">Seneste hash: <small>{{ prev_hash }}</small></p>
                 <p class="pb-1 mb-1">Payload: {{ payload }} </p>
-                {% if valid_proof %}
-                    <p class="pb-1 mb-1">Nonce:  {{ nonce }} </p>
-                {% else %}
+
                     <form action="{% url 'bcsim:mine' %}" method="post" id="mine_form" novalidate>
                         {% csrf_token %}
                         {{ form|crispy }}
                     </form>
-                {% endif %}             
 
-                {% if valid_proof %}
-                    <div class="d-flex mt-4 justify-content-between">
-                        <form action="" method="POST">
-                            {% csrf_token %}
-                            <div class="d-flex justify-content-center">
-                                <button type="submit" name="refresh" value="submit" class="btn btn-outline-danger">Kassér</button>
-                            </div>
-                        </form>
-                        <form action="" method="POST">
-                            {% csrf_token %}
-                            <div class="d-flex justify-content-center mb-2">
-                                <button type="submit" name="add_to_chain" value="submit" class="btn btn-outline-primary">Tilføj til blockchain</button>
-                            </div>
-                        </form>
-                    </div>
-                {% else %}
                     <div class="d-flex justify-content-center">
-                        <button type="submit" name="calculate_hash" value="submit" form="mine_form" class="btn btn-outline-primary my-2" id="hash_btn">Beregn hash</button>
-                        <button type="button" onclick = "plus_one()" class="btn btn-outline-primary my-2 ml-2" id="plus-one-button">+1</button>
-                    </div>                    
-                {% endif %}
+                        
+                        <button class="btn btn-outline-primary mr-2" type="submit" name="add_to_chain" form="mine_form" value="submit"
+                            id="add_to_chain_btn">
+                            Tilføj til blockchain
+                        </button>
+                        <button class="btn btn-outline-primary" type="submit" form="mine_form" 
+                                  id="calculate_hash_btn">
+                            Beregn hash
+                        </button>
+                        
+                    </div>
+            
             </div>
         </div>   
         {% if cur_hash %}
-            {% if valid_proof %}
-                <p class="alert alert-success">
-                    Nonce på {{ nonce }} gav gyldigt hash: <br>
+            <div class="card mt-2">
+                <p class="alert">
+                    Beregnet hash (block #{{ block_id }}, nonce {{ nonce }})<br>
                     <small>{{ cur_hash }}</small>
                 </p>
-            {% else %}
-                <p class="alert alert-danger">
-                    Nonce på {{ nonce }} gav ugyldigt hash: <br>
-                    <small>{{ cur_hash }}</small>
-                </p>
-            {% endif %}
+            </div>
+      
         {% endif %}    
     </div> 
 
@@ -129,14 +114,20 @@
         link_text.setSelectionRange(0, link_text.value.length);
         document.execCommand("copy")
     }
+
     function plus_one(){
-        nonce_input = document.getElementById("id_nonce")
+        var nonce_input = document.getElementById("id_nonce");
         if (!nonce_input.value){
             nonce_input.value = -1;
         }
-        nonce_input.value = parseInt(nonce_input.value) + 1;
-        form = document.getElementById('mine_form')
-        document.getElementById('hash_btn').click()
+        nonce_input.value = parseInt(nonce_input.value) + 1; 
+    }
+    function minus_one(){
+        var nonce_input = document.getElementById("id_nonce");
+        if (!nonce_input.value){
+            nonce_input.value = 1;
+        }
+        nonce_input.value = parseInt(nonce_input.value) - 1; 
     }
 
     function add_eventlisteners() {
@@ -150,15 +141,23 @@
         ); 
         // Eventlisteners for arrow keys 
         document.addEventListener('keydown', event => {
-            var elementExists = document.getElementById("id_nonce")
-            if (elementExists){ 
-                if (event.keyCode == 38){
+            //console.log(event.keyCode)
+            switch(event.keyCode){
+                case 38: // up arrow
                     plus_one();
-                }
+                    break
+                case 40: // down arrow
+                    minus_one();
+                    break
+                case 66: // B
+                    document.getElementById('calculate_hash_btn').click()
+                    break
+                case 84: // T
+                    document.getElementById('add_to_chain_btn').click()
+                    break
             }
-        });
+        })
     }
-
     add_eventlisteners()
     
 </script>

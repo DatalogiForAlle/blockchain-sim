@@ -32,23 +32,6 @@ class Blockchain(models.Model):
         default=Level.MEDIUM
     )
 
-    def hash_is_valid(self, hash):
-
-        if self.difficulty == Blockchain.Level.NEM:
-            if hash[0] in ["0", "1"]:
-                return True
-
-        elif self.difficulty == Blockchain.Level.MEDIUM:
-            if hash[0] == "0":
-                return True
-        
-        elif self.difficulty == Blockchain.Level.SVÆR:
-            if hash[:2] == "00":
-                return True
-
-        return False
-
-
     def __str__(self):
         return str(self.id)
 
@@ -62,9 +45,23 @@ class Blockchain(models.Model):
             self.id = new_unique_blockchain_id()
         super(Blockchain, self).save(*args, **kwargs)
     
-    
-                
+    def hash_is_valid(self, hash):
 
+        if self.difficulty == Blockchain.Level.NEM:
+            if hash[0] in ["0", "1"]:
+                return True
+
+        elif self.difficulty == Blockchain.Level.MEDIUM:
+            if hash[0] == "0":
+                return True
+
+        elif self.difficulty == Blockchain.Level.SVÆR:
+            if hash[:2] == "00":
+                return True
+
+        return False
+    
+    
 def new_unique_miner_id():
     """
     Create a new unique blockchain ID (8 alphabetic chars)
@@ -96,7 +93,7 @@ class Miner(models.Model):
 
     def num_mined_blocks(self):
         """ Number of mined blocks (genesis block not included) """
-        num_mined_blocks = Block.objects.filter(miner=self, block_id__gte=1).count()
+        num_mined_blocks = Block.objects.filter(miner=self, block_num__gte=1).count()
         return num_mined_blocks
 
     def color(self):
@@ -131,8 +128,8 @@ MAX_NONCE = 2**32 - 1
 
 class Block(models.Model):
 
-    # block_id is not primary_key, as it is only unique together w. the blockchain
-    block_id = models.IntegerField(primary_key=False)
+    # block_num is not primary_key, as it is only unique together w. the blockchain
+    block_num = models.IntegerField(primary_key=False)
 
     blockchain = models.ForeignKey(Blockchain, on_delete=models.CASCADE)
 
@@ -145,8 +142,15 @@ class Block(models.Model):
     prev_hash = models.CharField(max_length=200)
 
     def hash(self):
-        s = f"{self.block_id}{self.miner.name}{self.prev_hash}{self.payload}{self.nonce}"
+        s = f"{self.block_num}{self.miner.name}{self.prev_hash}{self.payload}{self.nonce}"
         hash = hashlib.sha256(s.encode()).hexdigest()
         return hash
 
-    
+    def hash_is_valid(self):
+        hash = self.hash()
+        return self.blockchain.hash_is_valid(hash)
+
+
+class Token(models.Model):
+    miner_id = models.ForeignKey(Miner, on_delete=models.CASCADE)
+    seed = models.CharField(max_length=10)
