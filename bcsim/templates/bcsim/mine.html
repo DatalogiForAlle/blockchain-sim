@@ -91,12 +91,12 @@
         {% if cur_hash %}
             {% if valid_proof %}
                 <p class="alert alert-success">
-                    Gyldigt hash: <br>
+                    Nonce på {{ nonce }} gav gyldigt hash: <br>
                     <small>{{ cur_hash }}</small>
                 </p>
             {% else %}
                 <p class="alert alert-danger">
-                    Ugyldigt hash: <br>
+                    Nonce på {{ nonce }} gav ugyldigt hash: <br>
                     <small>{{ cur_hash }}</small>
                 </p>
             {% endif %}
