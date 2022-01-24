@@ -25,9 +25,9 @@ class BlockchainForm(forms.ModelForm):
             'title': 'Titlen, du vælger her, vil fremgå som overskrift på din blockchain',
             'difficulty': 
                 'Hvor svært skal det være at føje blokke til din blockchain?<br>' +
-                ' - Nem: Gyldige hashes starter med 0 eller 1 (ca. 12 % af alle forsøg er gyldige)<br>' +
-                ' - Middel: Gyldige hashes starter med 0 (ca. 6% af alle forsøg er gyldige)<br>' +
-                ' - Svær: Gyldige hashes starter med 00 (ca. 0,4% af alle forsøg er gyldige)' 
+                ' - Nem: Gyldige hashes starter med 0 eller 1 (ca. 12 % af alle hashes gyldige)<br>' +
+                ' - Middel: Gyldige hashes starter med 0 (ca. 6% af alle hashes er gyldige)<br>' +
+                ' - Svær: Gyldige hashes starter med 00 (ca. 0,4% af alle hashes er gyldige)' 
             }
 
 class JoinForm(forms.ModelForm):
