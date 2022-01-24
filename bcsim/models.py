@@ -1,3 +1,4 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 import secrets
 import hashlib
@@ -126,6 +127,7 @@ class Miner(models.Model):
             color = f"rgb({red},{green},{blue}, 0.3)"
         return color
 
+MAX_NONCE = 2**32 - 1
 
 class Block(models.Model):
 
@@ -138,8 +140,7 @@ class Block(models.Model):
 
     payload = models.CharField(max_length=200)
 
-    # Nonce has to be an integer, but to be able to store very big integers, we save it as a string.
-    nonce = models.CharField(max_length=60, null=True)
+    nonce = models.IntegerField(null=True, blank=False)
 
     prev_hash = models.CharField(max_length=200)
 

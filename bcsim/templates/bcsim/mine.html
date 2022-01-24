@@ -59,7 +59,7 @@
                 {% if valid_proof %}
                     <p class="pb-1 mb-1">Nonce:  {{ nonce }} </p>
                 {% else %}
-                    <form action="{% url 'bcsim:mine' %}" method="post" id="mine_form">
+                    <form action="{% url 'bcsim:mine' %}" method="post" id="mine_form" novalidate>
                         {% csrf_token %}
                         {{ form|crispy }}
                     </form>
@@ -82,8 +82,9 @@
                     </div>
                 {% else %}
                     <div class="d-flex justify-content-center">
-                        <button type="submit" name="calculate_hash" value="submit" form="mine_form" class="btn btn-outline-primary my-2">Beregn hash</button>
-                    </div>
+                        <button type="submit" name="calculate_hash" value="submit" form="mine_form" class="btn btn-outline-primary my-2" id="hash_btn">Beregn hash</button>
+                        <button type="button" onclick = "plus_one()" class="btn btn-outline-primary my-2 ml-2" id="plus-one-button">+1</button>
+                    </div>                    
                 {% endif %}
             </div>
         </div>   
@@ -121,12 +122,45 @@
 {% block javascript %}
 
 <script>
+
     function copy_link(id) {
         var link_text = document.getElementById(id);
         link_text.select();
         link_text.setSelectionRange(0, link_text.value.length);
         document.execCommand("copy")
     }
+    function plus_one(){
+        nonce_input = document.getElementById("id_nonce")
+        if (!nonce_input.value){
+            nonce_input.value = -1;
+        }
+        nonce_input.value = parseInt(nonce_input.value) + 1;
+        form = document.getElementById('mine_form')
+        document.getElementById('hash_btn').click()
+    }
+
+    function add_eventlisteners() {
+        // Disable default window scrolling on up-arrow key
+        window.addEventListener("keydown", function(e) {
+                if ([38].indexOf(e.keyCode) > -1) {
+                    e.preventDefault();
+                }
+            },
+            false
+        ); 
+        // Eventlisteners for arrow keys 
+        document.addEventListener('keydown', event => {
+            var elementExists = document.getElementById("id_nonce")
+            if (elementExists){ 
+                if (event.keyCode == 38){
+                    plus_one();
+                }
+            }
+        });
+    }
+
+    add_eventlisteners()
+    
 </script>
 
 {% endblock javascript %}

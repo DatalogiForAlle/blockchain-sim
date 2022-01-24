@@ -75,14 +75,15 @@ class BlockForm(forms.ModelForm):
     class Meta:
         model = Block
         fields = ['nonce']
+        
 
     def clean_nonce(self):
-        """ Nonce has to be an integer """
+        """ Nonce has to be a non-zero positive 32 bit integer """
         nonce = self.cleaned_data['nonce']
         if nonce:
-            if not str(nonce).isnumeric():
+            if not 0 <= nonce <= 2**32 - 1:
                 raise forms.ValidationError(
-                    'Nonce skal være et ikke-negativt heltal')
+                    'Nonce skal være et ikke-negativt heltal på max 4294967295 (32-bit)')
         return nonce
 
 
