@@ -210,6 +210,8 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     session = client.session
     session['blockchain_id'] = bc.id
     session['miner_id'] = block.miner.id
+    session['last_block_num_shown_to_client'] = 1
+
     session.save()
 
     nonce = 34
@@ -224,14 +226,14 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     assert response.status_code == 200
     assertTemplateUsed(response, 'bcsim/mine.html')
     assert response.context['miner'] == miner
-    assert response.context['block_id'] == 1
+    assert response.context['block_num'] == 1
     assert response.context['blockchain'] == bc
     assert response.context['blocks'].last() == block
     assert response.context['prev_hash'] == block.hash()
-    # assert isinstance(response.context['form'], BlockForm)
+    
 
     expected_cur_hash = hash_context(
-        {'block_id': 1,
+        {'block_num': 1,
          'miner': miner,
          'prev_hash': block.hash(),
          'payload': next_payload(miner.blockchain.id, block.id),
@@ -241,23 +243,17 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     assert expected_cur_hash == response.context['cur_hash']
     assert expected_cur_hash[0] in ['0','1']
 
-    # Since the calculated hash starts with 0 or 1 and the level is easy, we have a valid proof
-    assert response.context['valid_proof'] == True
-
-    # Since we have valid proof, the context should contain nonce and payload
     assert response.context['payload'] == next_payload(miner.blockchain.id, block.id)
     assert response.context['nonce'] == nonce
 
-    # Since the proof is valid, the reponse should contain an 'Add block to chain' button and a 'refresh' button
     assert 'add_to_chain' in str(response.content)
-    assert 'refresh' in str(response.content)
 
     # No new block has been created (there is still only 1 block in the chain)
     assert Block.objects.all().count() == 1
 
-    # The user fills out the block form and presses the 'Calculate hash button'
+    # The user fills out the block form and presses the 'Add to chain'
     data = {
-        'nonce': 'test nonce',
+        'nonce': nonce,
         'add_to_chain': 'submit'
     }
     response = client.post(reverse('bcsim:mine'), data=data)
@@ -266,71 +262,11 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
     assert Block.objects.all().count() == 2
 
     # the new block has the correct attributes
-    new_b = Block.objects.get(blockchain=bc, block_id=1)
+    new_b = Block.objects.get(blockchain=bc, block_num=1)
     assert(new_b.payload == next_payload(miner.blockchain.id, block.id))
     assert(new_b.miner_id == miner.id)
     assert(new_b.prev_hash == block.hash())
 
-
-def test_mine_view_calculate_hash_submit_when_proof_is_not_valid(client, db):
-    """
-    A logged in client fills out the mining form and presses the 'calculate hash' button.
-    The input data does not give valid proof which is reflected in the returned data.
-    """
-    miner = MinerFactory(blockchain = BlockChainFactory(id="abcdefgh"), id="abcdefgh")
-    assert miner.id == 'abcdefgh'
-    assert miner.blockchain.id == 'abcdefgh'
-
-    block = BlockFactory(miner=miner, blockchain = miner.blockchain)
-
-    session = client.session
-    session['blockchain_id'] = block.blockchain.id
-    session['miner_id'] = block.miner.id
-    session['miner_num'] = block.miner.miner_num
-
-    session.save()
-
-    assert isinstance(block, Block)
-    assert block.block_id == 0
-
-    block_count = Block.objects.filter(blockchain=block.blockchain).count()
-    assert block_count == 1
-
-    # The user fills out the block form and presses the 'Calculate hash button'
-    data = {
-        'nonce': 1234567892,
-        'calculate_hash': 'submit'
-    }
-    response = client.post(reverse('bcsim:mine'), data=data)
-
-    # Response code and template content is checked
-    assert response.status_code == 200
-    assertTemplateUsed(response, 'bcsim/mine.html')
-    assert response.context['miner'] == miner
-    assert response.context['block_id'] == 1
-    assert response.context['blockchain'] == block.blockchain
-    assert response.context['blocks'].last() == block
-    assert response.context['prev_hash'] == block.hash()
-    assert isinstance(response.context['form'], BlockForm)
-
-
-    expected_cur_hash = hash_context(
-        {'block_id': 1,
-         'miner': miner,
-         'prev_hash': block.hash(),
-         'payload': next_payload(miner.blockchain.id, block.id),
-         'nonce': 1234567892})
-    assert expected_cur_hash == response.context['cur_hash']
-
-    # Since the calculated hash starts does not start with 0,1 or 2 the proof should not be valid
-    assert response.context['valid_proof'] == False
-
-    # Since the proof is valid, the reponse should not contain an 'Add block to chain' button.
-    assert 'add_to_chain' not in str(response.content)
-    assert 'kassér' not in str(response.content)
-
-    # No new block has been created (there is still only 1 block in the chain)
-    assert Block.objects.all().count() == 1
 
 
 def test_logout_view(client, db):

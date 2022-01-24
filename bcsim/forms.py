@@ -14,7 +14,7 @@ class BlockchainForm(forms.ModelForm):
     """ Form used to create a blockchain """
     class Meta:
         model = Blockchain
-        fields = ['title', 'difficulty','creator_name']
+        fields = ['title', 'creator_name', 'difficulty']
         labels = {
             'title': 'Hvad skal vi kalde din blockchain?', 
             'difficulty': 'Sværhedsgrad',
@@ -75,6 +75,9 @@ class BlockForm(forms.ModelForm):
     class Meta:
         model = Block
         fields = ['nonce']
+        labels = {
+            'nonce': 'Nonce:',
+        }
         
 
     def clean_nonce(self):

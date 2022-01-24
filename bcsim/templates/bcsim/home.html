@@ -10,10 +10,9 @@
 
 {% if miner %}
 
-  <div class="alert alert-info" >
+  <div class="p-3 mb-5 card" >
     Du er logget på blockchainen "{{ miner.blockchain.title }}" (blockchain ID = {{ miner.blockchain.id }}).<br>
     Dit minearbejdernavn/holdnavn er "{{ miner.name}}" (minearbejder-ID = {{ miner.id }}).<br>
-    Gå tilbage til <a href="{% url 'bcsim:mine' %}">minedriften</a> på denne blockchain.
   </div>
 
   <div class="alert alert-warning">

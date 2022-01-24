@@ -25,10 +25,8 @@ class MinerFactory(factory.django.DjangoModelFactory):
 class BlockFactory(factory.django.DjangoModelFactory):
     """ Creates a genesis block by default """
     class Meta:
-
         model = Block
-
-    block_id = 0
+    block_num = 0
     blockchain = factory.SubFactory(BlockChainFactory)
     miner = factory.SubFactory(MinerFactory)
     payload = 'Genesis'
