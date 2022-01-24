@@ -6,12 +6,12 @@ from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 from .models import Blockchain, Block, Miner
 from .forms import BlockchainForm, JoinForm, BlockForm, LoginForm
-import secrets
 
 # All session variables
 MINER_VARS = ['miner_id', 'miner_num', 'blockchain_id']
 VALID_PROOF_VARS = ['valid_proof', 'valid_proof_payload', 'valid_proof_nonce',
                     'valid_proof_block_id']
+ALL_SESSION_VARIABLES = MINER_VARS + VALID_PROOF_VARS
 
 
 
@@ -71,8 +71,7 @@ def logout_view(request):
     miner_id = request.session['miner_id']
 
     # delete all session variables
-    del_session_vars(MINER_VARS, request)
-    del_session_vars(VALID_PROOF_VARS, request)
+    del_session_vars(ALL_SESSION_VARIABLES, request)
 
     messages.info(
         request, f"Du forlod blockchainen med ID={blockchain_id}. Dit minearbejder-ID var {miner_id}.")
@@ -260,13 +259,9 @@ def mine_view(request):
 
             if 'refresh' in request.POST:
                 del_session_vars(VALID_PROOF_VARS, request)
-                return redirect(reverse('bcsim:mine'))
-
-            if 'calculate_hash' in request.POST and blockchain.paused:
-                pass
+                return redirect(reverse('bcsim:mine'))                
 
             if 'calculate_hash' in request.POST and not blockchain.paused:
-                
                 form = BlockForm(request.POST)
 
                 if form.is_valid():
@@ -287,7 +282,7 @@ def mine_view(request):
 
                     else:
                         context['valid_proof'] = False
-
+                
             if 'add_to_chain' in request.POST and request.session['valid_proof']:
 
                 # Check if a new block has been added to chain since the valid hash was created

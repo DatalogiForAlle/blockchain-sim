@@ -25,9 +25,9 @@ class BlockchainForm(forms.ModelForm):
             'title': 'Titlen, du vælger her, vil fremgå som overskrift på din blockchain',
             'difficulty': 
                 'Hvor svært skal det være at føje blokke til din blockchain?<br>' +
-                ' - Nem: Gyldige hashes starter med 0 eller 1 (ca. 12 % af alle forsøg er gyldige)<br>' +
-                ' - Middel: Gyldige hashes starter med 0 (ca. 6% af alle forsøg er gyldige)<br>' +
-                ' - Svær: Gyldige hashes starter med 00 (ca. 0,4% af alle forsøg er gyldige)' 
+                ' - Nem: Gyldige hashes starter med 0 eller 1 (ca. 12 % af alle hashes gyldige)<br>' +
+                ' - Middel: Gyldige hashes starter med 0 (ca. 6% af alle hashes er gyldige)<br>' +
+                ' - Svær: Gyldige hashes starter med 00 (ca. 0,4% af alle hashes er gyldige)' 
             }
 
 class JoinForm(forms.ModelForm):
@@ -75,14 +75,15 @@ class BlockForm(forms.ModelForm):
     class Meta:
         model = Block
         fields = ['nonce']
+        
 
     def clean_nonce(self):
-        """ Nonce has to be an integer """
+        """ Nonce has to be a non-zero positive 32 bit integer """
         nonce = self.cleaned_data['nonce']
         if nonce:
-            if not str(nonce).isnumeric():
+            if not 0 <= nonce <= 2**32 - 1:
                 raise forms.ValidationError(
-                    'Nonce skal være et ikke-negativt heltal')
+                    'Nonce skal være et ikke-negativt heltal på max 4294967295 (32-bit)')
         return nonce
 
 

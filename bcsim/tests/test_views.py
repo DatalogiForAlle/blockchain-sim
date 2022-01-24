@@ -246,7 +246,7 @@ def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
 
     # Since we have valid proof, the context should contain nonce and payload
     assert response.context['payload'] == next_payload(miner.blockchain.id, block.id)
-    assert response.context['nonce'] == str(nonce)
+    assert response.context['nonce'] == nonce
 
     # Since the proof is valid, the reponse should contain an 'Add block to chain' button and a 'refresh' button
     assert 'add_to_chain' in str(response.content)
