@@ -5,12 +5,18 @@
 
 
 {% block content %}
-{{request.session.}}
+
 {% if blockchain.paused %}
     <p class="alert alert-warning">
         Minedrift er sat på pause af skaberen af denne blockchain
     </p>
 {% endif %}
+
+<p class="alert alert-info d-none" id="verification-delay-info">
+    Kontrollerer hash...
+</p>
+
+
 
 <h4 class="mb-4"><span class="text-black-50">Blockchain [{{ blockchain.id }}]</span>: {{ blockchain.title }}</h4>      
 
@@ -60,22 +66,21 @@
                     <form action="{% url 'bcsim:mine' %}" method="post" id="mine_form" novalidate>
                         {% csrf_token %}
                         {{ form|crispy }}
+                        <input type="hidden" name="submit-purpose" value="true" id="submit-purpose">
                     </form>
 
                     <div class="d-flex justify-content-center">
                         
-                        <button class="btn btn-outline-primary mr-2" type="submit" name="add_to_chain" form="mine_form" value="submit"
-                            id="add_to_chain_btn">
+                        <button class="btn btn-outline-primary mr-2" type="button" id="add_to_chain_btn" onclick ="add_to_chain_btn_handler()">
                             Tilføj til blockchain
                         </button>
                         <button class="btn btn-outline-primary mr-2" type="submit" form="mine_form" 
                                   id="calculate_hash_btn">
                             Beregn hash
                         </button>
-                        <button class="btn btn-outline-primary" onclick="plus_one()" 
-                                id="calculate_hash_btn">
-                         +1 
-                         </button>
+                        <button class="btn btn-outline-primary" onclick="plus_one()">
+                            +1 
+                        </button>
               
                     </div>
             
@@ -118,6 +123,14 @@
         link_text.setSelectionRange(0, link_text.value.length);
         document.execCommand("copy")
     }
+    
+    function add_to_chain_btn_handler(){
+        potential_hash_error_message = document.getElementsByClassName('alert')[0]
+        potential_hash_error_message.classList.add("d-none")
+        document.getElementById('verification-delay-info').classList.remove('d-none')
+        document.getElementById('submit-purpose').name = "add_to_chain"
+        document.getElementById('mine_form').submit()
+    }
 
     function plus_one(){
         var nonce_input = document.getElementById("id_nonce");
@@ -145,7 +158,6 @@
         ); 
         // Eventlisteners for arrow keys 
         document.addEventListener('keydown', event => {
-            //console.log(event.keyCode)
             switch(event.keyCode){
                 case 38: // up arrow
                     plus_one();

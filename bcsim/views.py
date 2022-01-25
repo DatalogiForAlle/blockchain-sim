@@ -124,7 +124,6 @@ def home_view(request):
                 return redirect(reverse('bcsim:mine'))
             
 
-
         elif 'create_bc' in request.POST:
             expand = 'first'
 
@@ -266,14 +265,16 @@ def mine_view(request):
                     context['cur_hash'] = hash
 
                     if 'add_to_chain' in request.POST:
-
+                     
+                        # It should take some time to check the validity of the block
+                        time_delay_in_seconds = 2
+                        time.sleep(time_delay_in_seconds)
+                     
                         if not hash_is_valid:    
                             messages.error(
                                 request, f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
                         else:
-
-                            time.sleep(2)
-                            
+       
                             new_block.save()    
 
                             # miner reward
