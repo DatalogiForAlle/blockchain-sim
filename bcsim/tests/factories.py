@@ -18,7 +18,6 @@ class MinerFactory(factory.django.DjangoModelFactory):
         model = Miner
     name = 'Bob'
     miner_num = 0
-
     blockchain = factory.SubFactory(BlockChainFactory)
 
 

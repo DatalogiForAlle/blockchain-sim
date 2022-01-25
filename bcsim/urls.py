@@ -9,6 +9,7 @@ urlpatterns = [
     path('inviter', views.invite_view, name='invite'),
     path('minedrift/', views.mine_view, name='mine'),
     path('markedsplads/', views.market, name='market'),
+    path('toggle_pause/', views.toggle_pause, name='toggle_pause'),
     path('logout/', views.logout_view, name='logout'),
     path('block-list/', views.block_list_view_htmx, name="block_list"),
 ]
