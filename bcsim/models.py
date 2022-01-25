@@ -20,7 +20,7 @@ class Blockchain(models.Model):
     creator_name = models.CharField(max_length=36,default="Skaber")
     title = models.CharField(max_length=50, default="Transaktioner")
     created_at = models.DateTimeField(auto_now_add=True)
-    paused = models.BooleanField(default=False)
+    is_paused = models.BooleanField(default=False)
 
     class Level(models.IntegerChoices):
         NEM = 1
@@ -35,7 +35,6 @@ class Blockchain(models.Model):
     def __str__(self):
         return str(self.id)
 
-
     def save(self, *args, **kwargs):
         """
         Set unique custom id for blockchain before creating a new blockchain object
@@ -45,6 +44,10 @@ class Blockchain(models.Model):
             self.id = new_unique_blockchain_id()
         super(Blockchain, self).save(*args, **kwargs)
     
+    def toggle_pause(self):
+        self.is_paused = not self.is_paused
+        self.save()
+
     def hash_is_valid(self, hash):
 
         if self.difficulty == Blockchain.Level.NEM:
@@ -80,7 +83,8 @@ class Miner(models.Model):
     name = models.CharField(max_length=36,)
     balance = models.IntegerField(default = 0)
     created_at = models.DateTimeField(auto_now_add=True)
-    creator = models.BooleanField(default=False)
+    is_creator = models.BooleanField(default=False)
+    number_of_last_block_seen = models.IntegerField(default=0)
 
     def save(self, *args, **kwargs):
         """
@@ -95,6 +99,16 @@ class Miner(models.Model):
         """ Number of mined blocks (genesis block not included) """
         num_mined_blocks = Block.objects.filter(miner=self, block_num__gte=1).count()
         return num_mined_blocks
+
+    def add_miner_reward(self):
+        self.balance += 100
+        self.save()
+        
+    def missed_last_block(self):
+        current_block_num = Block.objects.filter(
+            blockchain=self.blockchain).count()
+        return current_block_num != self.number_of_last_block_seen
+
 
     def color(self):
         """

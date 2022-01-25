@@ -67,7 +67,7 @@ def logout_view(request):
     miner_id = request.session['miner_id']
 
     # delete all session variables
-    all_session_vars = ['miner_id', 'miner_num', 'blockchain_id'] + ['last_block_num_shown_to_client']
+    all_session_vars = ['miner_id', 'blockchain_id'] 
     del_session_vars(all_session_vars,request) 
 
     messages.info(
@@ -78,9 +78,7 @@ def logout_view(request):
 
 def home_view(request):
     join_form = JoinForm()
-
     create_form = BlockchainForm()
-
     login_form = LoginForm()
 
     expand = 'none'
@@ -115,7 +113,6 @@ def home_view(request):
 
                 # set session variables for client
                 request.session['miner_id'] = new_miner.id
-                request.session['miner_num'] = new_miner.miner_num
                 request.session['blockchain_id'] = request.POST['blockchain_id']
 
                 messages.success(request, "Du deltager nu i en blockchain!")
@@ -135,9 +132,8 @@ def home_view(request):
                 new_blockchain = create_form.save()
 
                 # create miner
-                creator = Miner.objects.create(name=create_form.cleaned_data['creator_name'], blockchain=new_blockchain, miner_num=0, creator=True)
+                creator = Miner.objects.create(name=create_form.cleaned_data['creator_name'], blockchain=new_blockchain, miner_num=0, is_creator=True)
                 request.session['miner_id'] = creator.id
-                request.session['miner_num'] = creator.miner_num
                 request.session['blockchain_id'] = new_blockchain.id
 
                 # create initial block in chain
@@ -169,7 +165,6 @@ def home_view(request):
 
                 # set session variables for client
                 request.session['miner_id'] = miner.id
-                request.session['miner_num'] = miner.miner_num
                 request.session['blockchain_id'] = request.POST['blockchain_id']
 
                 messages.success(request, "Du deltager nu i en blockchain!")
@@ -198,13 +193,24 @@ def home_view(request):
 
     return render(request, 'bcsim/home.html', context)
 
-
-def mine_view(request):
-
+@require_POST
+def toggle_pause(request):
     try:
         miner = Miner.objects.get(id=request.session['miner_id'])
     except:
-        # if client does not have a session, return to home:
+        return redirect(reverse('bcsim:home'))
+
+    if not miner.is_creator:
+        return redirect(reverse('bcsim:home'))
+
+    miner.blockchain.toggle_pause()
+    return redirect(reverse('bcsim:mine'))
+
+
+def mine_view(request):
+    try:
+        miner = Miner.objects.get(id=request.session['miner_id'])
+    except:
         return redirect(reverse('bcsim:home'))
     else:
         blockchain = miner.blockchain
@@ -214,84 +220,70 @@ def mine_view(request):
         prev_hash = last_block.hash()
         current_block_num = len(blocks)
         payload = next_payload(blockchain.id, current_block_num)
+        form = BlockForm()
+        nonce = None
+        hash = None
+
+        if request.method == "POST":
+            
+            if blockchain.is_paused:
+                return redirect(reverse('bcsim:mine'))
+                   
+            form = BlockForm(request.POST)
+            if form.is_valid():     
+                
+                if miner.missed_last_block():
+                    messages.error(
+                        request, f"En anden minearbejder tilføjede blok #{miner.number_of_last_block_seen} før dig!")
+                    return redirect(reverse('bcsim:mine'))
+                
+                nonce = form.cleaned_data['nonce']
+
+                new_block = Block(
+                    block_num=current_block_num,
+                    blockchain=blockchain,
+                    miner=miner,
+                    prev_hash=prev_hash,
+                    payload=payload,
+                    nonce=nonce,
+                )
+
+                hash, hash_is_valid = new_block.hash_is_valid()
+
+                if 'add_to_chain' in request.POST:
+                    
+                    # We want miners to check hashes before trying to add blocks to chain.
+                    # Therefore we make a little time delay here
+                    time_delay_in_seconds = 2
+                    time.sleep(time_delay_in_seconds)
+                    
+                    if not hash_is_valid:    
+                        messages.error(
+                            request, f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
+                    else:    
+                        new_block.save()    
+                        miner.add_miner_reward()
+                        messages.success(
+                            request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
+
+                        return redirect(reverse('bcsim:mine'))
+
+        
         context = {
             'blocks': blocks,
             'blockchain': blockchain,
             'block_num': current_block_num,
             'miner': miner,
             'prev_hash': prev_hash,
-            'payload': payload
+            'payload': payload,
+            'form':form,
+            'nonce': nonce,
+            'cur_hash': hash
         }
-        form = BlockForm()
+        
+        miner.number_of_last_block_seen = current_block_num
+        miner.save()
 
-        if request.method == "POST":
-
-            if 'pause_blockchain' in request.POST:
-                blockchain.paused = True
-                blockchain.save()
-                return redirect(reverse('bcsim:mine'))
-
-            if 'un_pause_blockchain' in request.POST:
-                blockchain.paused = False
-                blockchain.save()
-                return redirect(reverse('bcsim:mine'))
-            
-            if not blockchain.paused:
-                    
-                last_block_num_shown_to_client = request.session['last_block_num_shown_to_client']
-                form = BlockForm(request.POST)
-                if form.is_valid():     
-                    
-                    # Check if a new block has been added to chain since the valid hash was created
-                    if current_block_num != last_block_num_shown_to_client:
-                        messages.error(
-                            request, f"En anden minearbejder tilføjede blok #{last_block_num_shown_to_client} før dig!")
-                        return redirect(reverse('bcsim:mine'))
-                    
-                    nonce = form.cleaned_data['nonce']
-
-                    new_block = Block(
-                        block_num=current_block_num,
-                        blockchain=blockchain,
-                        miner=miner,
-                        prev_hash=prev_hash,
-                        payload=payload,
-                        nonce=nonce,
-                    )
-
-                    context['nonce'] = nonce
-
-                    hash, hash_is_valid = new_block.hash_is_valid()
-                    context['cur_hash'] = hash
-
-                    if 'add_to_chain' in request.POST:
-                     
-                        # It should take some time to check the validity of the block
-                        time_delay_in_seconds = 2
-                        time.sleep(time_delay_in_seconds)
-                     
-                        if not hash_is_valid:    
-                            messages.error(
-                                request, f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
-                        else:
-       
-                            new_block.save()    
-
-                            # miner reward
-                            miner.balance += 100
-                            miner.save()
-
-                            messages.success(
-                                request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
-
-                            del_session_vars(
-                                ['last_block_num_shown_to_client'], request)
-
-                            return redirect(reverse('bcsim:mine'))
-
-        context['form'] = form
-
-        request.session['last_block_num_shown_to_client'] = current_block_num
         return render(request, 'bcsim/mine.html', context)
 
 

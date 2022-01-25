@@ -67,7 +67,6 @@ def test_home_view_post_request_join_submit_valid(db, client):
     assert 'miner_id' in client.session
     assert 'blockchain_id' in client.session
     assert len(client.session['blockchain_id']) == 8
-    assert client.session['miner_num'] == 0
 
     # after join-operations the client is redirected to the mining page
     assert response.status_code == 302
@@ -132,7 +131,6 @@ def test_home_view_post_request_create_submit_valid(db, client):
     # correct session data is now createad
     assert 'xxx' not in client.session
     assert 'miner_id' in client.session
-    assert 'miner_num' in client.session
     assert 'blockchain_id' in client.session
     assert len(client.session['blockchain_id']) == 8
     assert len(client.session['miner_id']) == 8
@@ -201,82 +199,11 @@ def test_mine_view_if_user_has_no_session(client, db):
     assert (response['Location'] == reverse('bcsim:home'))
 
 
-def test_mine_view_calculate_hash_submit_when_proof_is_valid(client, db):
-    """
-    A logged in client fills out the mining form and presses the 'calculate hash' button.
-    The input data gived a valid proof which is reflected in the returned data.
-    """
-    bc = BlockChainFactory(id = "abcdfgh", difficulty=1)
-    miner = MinerFactory(blockchain=bc)
-    block = BlockFactory(blockchain=bc, miner=miner)
-    session = client.session
-    session['blockchain_id'] = bc.id
-    session['miner_id'] = block.miner.id
-    session['last_block_num_shown_to_client'] = 1
-
-    session.save()
-
-    nonce = 34
-    # The user fills out the block form and presses the 'Calculate hash button'
-    data = {
-        'nonce': nonce,
-        'calculate_hash': 'submit'
-    }
-    response = client.post(reverse('bcsim:mine'), data=data)
-
-    # Response code and template content is checked
-    assert response.status_code == 200
-    assertTemplateUsed(response, 'bcsim/mine.html')
-    assert response.context['miner'] == miner
-    assert response.context['block_num'] == 1
-    assert response.context['blockchain'] == bc
-    assert response.context['blocks'].last() == block
-    assert response.context['prev_hash'] == block.hash()
-    
-    next_block = Block(
-            block_num = 1,
-            miner = miner,
-            prev_hash = block.hash(),
-            payload=next_payload(miner.blockchain.id, block.id),
-            nonce = nonce
-    )
-    expected_cur_hash = next_block.hash()
-
-    assert expected_cur_hash == response.context['cur_hash']
-    assert expected_cur_hash[0] in ['0','1']
-
-    assert response.context['payload'] == next_payload(miner.blockchain.id, block.id)
-    assert response.context['nonce'] == nonce
-
-    assert 'add_to_chain' in str(response.content)
-
-    # No new block has been created (there is still only 1 block in the chain)
-    assert Block.objects.all().count() == 1
-
-    # The user fills out the block form and presses the 'Add to chain'
-    data = {
-        'nonce': nonce,
-        'add_to_chain': 'submit'
-    }
-    response = client.post(reverse('bcsim:mine'), data=data)
-
-    # ... this will add a new block to the blockchain
-    assert Block.objects.all().count() == 2
-
-    # the new block has the correct attributes
-    new_b = Block.objects.get(blockchain=bc, block_num=1)
-    assert(new_b.payload == next_payload(miner.blockchain.id, block.id))
-    assert(new_b.miner_id == miner.id)
-    assert(new_b.prev_hash == block.hash())
-
-
-
 def test_logout_view(client, db):
     """ logout view redirects to home view """
     block = BlockFactory()
     session = client.session
     session['blockchain_id'] = block.blockchain.id
-    session['miner_num'] = 3
     session['miner_id'] = 9
 
     session.save()

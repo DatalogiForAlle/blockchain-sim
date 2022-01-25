@@ -6,7 +6,7 @@
 
 {% block content %}
 
-{% if blockchain.paused %}
+{% if blockchain.is_paused %}
     <p class="alert alert-warning">
         Minedrift er sat på pause af skaberen af denne blockchain
     </p>
@@ -20,19 +20,17 @@
 
 <h4 class="mb-4"><span class="text-black-50">Blockchain [{{ blockchain.id }}]</span>: {{ blockchain.title }}</h4>      
 
-{% if miner.creator %}
-    <form action="" method="POST">
+{% if miner.is_creator %}
+    <form action="{% url 'bcsim:toggle_pause' %}" method="POST">
         {% csrf_token %}
         <div class="d-flex justify-content-center">
-            {% if blockchain.paused %}
-                <button type="submit" name="un_pause_blockchain" value="submit" class="btn btn-secondary">
+            <button type="submit" class="btn btn-secondary">
+                {% if blockchain.is_paused %}
                     Genstart minedrift
-                </button>
-            {% else %}
-                <button type="submit" name="pause_blockchain" value="submit" class="btn btn-secondary">
+                {% else %}
                     Sæt minedrift på pause
-                </button>
-            {% endif %}
+                {% endif %}
+            </button>
         </div>
     </form>
 {% endif %}
