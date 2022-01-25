@@ -28,15 +28,15 @@ def sim_is_paused(html):
         return False
 
 
-def get_block_id(html):
+def get_block_num(html):
    match = re.search("Blok #([0-9]+)<", r.text)
 
    try:
-       block_id = int(match[1])
+       block_num = int(match[1])
    except ValueError:
        raise ValueError("Unable to extract block id")
 
-   return block_id
+   return block_num
 
 
 def get_hash(html):
@@ -101,12 +101,11 @@ r = s.post(base_url, data=data)
 
 # New bot joined successfully
 if r.url == base_url + "/minedrift/":
-
     r = s.get(base_url + "/inviter")
     bot_miner_id = get_miner_id(r.text)
 
     # Save the bot id / miner id to be able to rejoin later
-    with open(f"{blockchain_id}_{bot_name}.miner.bot", "w") as f:
+    with open(f"bot_library/{blockchain_id}_{bot_name}.miner.bot", "w") as f:
         f.write(bot_miner_id)
 
 
@@ -115,7 +114,7 @@ if r.url == base_url + "/minedrift/":
 else:
     try:
         # Read bot id / miner id from disk
-        with open(f"{blockchain_id}_{bot_name}.miner.bot", "r") as f:
+        with open(f"bot_library/{blockchain_id}_{bot_name}.miner.bot", "r") as f:
             bot_miner_id = f.readline().strip() 
 
     except:
@@ -144,7 +143,7 @@ print(f"  Joined blockchain {blockchain_id} as bot '{bot_name}' (id: {bot_miner_
 print(f"  Valid hashes begin with: {start_chars}")
 
 nonce = random.randint(0,1000)
-prev_block_id = 0
+prev_block_num = 0
 tries_since_last_win = 0
 tries_to_win = []
 while True:
@@ -160,15 +159,15 @@ while True:
 
     # Determine if a new block is being mined 
     # or if it is the same block as last iteration
-    block_id = get_block_id(r.text)
+    block_num = get_block_num(r.text)
 
-    if block_id > prev_block_id:
+    if block_num > prev_block_num:
 
-        if prev_block_id != 0:
-            print(f"  Another miner won block {prev_block_id}, trying the next!")
+        if prev_block_num != 0:
+            print(f"  Another miner won block {prev_block_num}, trying the next!")
 
-        print(f"\n# Trying to mine block {block_id}")
-        prev_block_id = block_id
+        print(f"\n# Trying to mine block {block_num}")
+        prev_block_num = block_num
         
         # New block new random nonce
         nonce = random.randint(0,1000)
@@ -197,14 +196,14 @@ while True:
         r = s.post(base_url + "/minedrift/", data=data)
 
         if block_added_success(r.text):
-            print(f"  Won block {block_id}")
+            print(f"  Won block {block_num}")
             tries_to_win.append(tries_since_last_win)
             tries_avg = sum(tries_to_win)/len(tries_to_win)
             print(f"  Tries to win: {tries_to_win} (avg. {tries_avg:.1f})") 
             tries_since_last_win = 0
 
         else: 
-            print(f"  Lost block {block_id}, another miner claimed it first!")
+            print(f"  Lost block {block_num}, another miner claimed it first!")
 
     nonce = nonce+1
     time.sleep(delay)
