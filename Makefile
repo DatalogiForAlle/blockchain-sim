@@ -21,6 +21,16 @@ stop: ## Stop developmentment server
 shell:  ## Open shell in running docker development container
 	docker-compose -f docker-compose.dev.yml exec web /bin/bash
 
+migrations: # make migrations
+	docker-compose -f docker-compose.dev.yml exec web python manage.py makemigrations
+
+migrate: # make migrations
+	docker-compose -f docker-compose.dev.yml exec web python manage.py migrate
+
+dev_superuser: # make development superuser 
+	docker-compose -f docker-compose.dev.yml exec web python manage.py createsuperuser
+
+
 # ---------- Checks and tests ---------- #
 test: ## Execute tests within the docker image
 	DJANGO_SETTINGS_MODULE=config.settings docker-compose -f docker-compose.dev.yml run --rm web pytest
@@ -44,15 +54,6 @@ check: flake8 test
 tidy:   ## Reformat source files to adhere to PEP8 
 	black -79 . --exclude=bcsim/migrations --extend-exclude=accounts/migrations
 
-
-migrations: # make migrations
-	docker-compose -f docker-compose.dev.yml exec web python manage.py makemigrations
-
-migrate: # make migrations
-	docker-compose -f docker-compose.dev.yml exec web python manage.py migrate
-
-dev_superuser: # make development superuser 
-	docker-compose -f docker-compose.dev.yml exec web python manage.py createsuperuser
 
 
 

@@ -1,3 +1,4 @@
+import os
 import requests
 import re
 import time
@@ -77,15 +78,22 @@ try:
     blockchain_id = sys.argv[1]
     bot_name = sys.argv[2]
     delay  = float(sys.argv[3]) # Delay between nonce guesses/requests
+    host = sys.argv[4]
+
 except (IndexError, ValueError):
-    print(f"Usage: {sys.argv[0]} <blockchain id> <bot name> <delay>")
-    print(f"e.g. {sys.argv[0]} 0ee59356 Bot 1.5")
+    print(f"Usage: {sys.argv[0]} <blockchain id> <bot name> <delay> <host>")
+    print(f"e.g. {sys.argv[0]} 0ee59356 Bot 1.5 local")
+    print(f"e.g. {sys.argv[0]} 0ee59356 Bot 1.5 prod")
+
     sys.exit()
 
 
 # Session object
 s = requests.Session()
-base_url = "https://blockchain-sim.dataekspeditioner.dk"
+if host == 'prod':
+    base_url = "https://blockchain-sim.dataekspeditioner.dk"
+else: 
+    base_url = "http://127.0.0.1:8000"
 
 
 ### Join block chain ###
@@ -98,6 +106,11 @@ data = {'csrfmiddlewaretoken': get_csrf_token(r.text),
         'join_bc': 'submit'}
 
 r = s.post(base_url, data=data)
+
+# Create bot_library folder if it does not exists
+if not os.path.exists('bot_library'):
+    os.makedirs('bot_library')
+
 
 # New bot joined successfully
 if r.url == base_url + "/minedrift/":
