@@ -23,9 +23,9 @@ class Blockchain(models.Model):
     is_paused = models.BooleanField(default=False)
 
     class Level(models.IntegerChoices):
-        NEM = 1
-        MEDIUM = 2
-        SVÆR = 3
+        EASY = 1, ('Nem')
+        MEDIUM = 2, ('Middel')
+        DIFFICULT = 3, ('Svær')
 
     difficulty = models.PositiveSmallIntegerField(
         choices=Level.choices, 
@@ -39,8 +39,8 @@ class Blockchain(models.Model):
         """
         Set unique custom id for blockchain before creating a new blockchain object
         """
-        if not self.id:
-            # we are creating a new blockchain (not updating an existing blockchain)
+        blockchain_is_brand_new = not self.id 
+        if blockchain_is_brand_new: 
             self.id = new_unique_blockchain_id()
         super(Blockchain, self).save(*args, **kwargs)
     
@@ -50,7 +50,7 @@ class Blockchain(models.Model):
 
     def hash_is_valid(self, hash):
 
-        if self.difficulty == Blockchain.Level.NEM:
+        if self.difficulty == Blockchain.Level.EASY:
             if hash[0] in ["0", "1"]:
                 return True
 
@@ -58,7 +58,7 @@ class Blockchain(models.Model):
             if hash[0] == "0":
                 return True
 
-        elif self.difficulty == Blockchain.Level.SVÆR:
+        elif self.difficulty == Blockchain.Level.DIFFICULT:
             if hash[:2] == "00":
                 return True
 
@@ -113,11 +113,13 @@ class Miner(models.Model):
     def color(self):
         """
         Get the unique color identifying the miner in question. 
-        """
-
-        # The 38 nice colors are from this list: https: // davidpiesse.github.io/tailwind-md-colours /
-        # (more colors can be added from the list if needed)
         
+        The first 38 miners who join a blockchain will get a color from from this list collection of nice colors
+        https: // davidpiesse.github.io/tailwind-md-colours /
+        (more colors can be added from the list if needed)
+        
+        The following miners will get a randomly generated color.
+        """
         NICE_COLORS = [
             "#b3e5fc", "#dcedc8", "#ffcdd2", "#ff8a80", "#ff80ab", "#ea80fc", "#b388ff", "#42a5f5", "#03a9f4", "#26c6da",
             "#26a69a", "#8bc34a", "#dce775", "#ffee58", "#ffca28", "#ffa726", "#ff7043", "#c5cae9", "#b2dfdb", "#a7ffeb",
