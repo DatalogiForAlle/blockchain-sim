@@ -9,16 +9,14 @@
 
 
 {% if blockchain.is_paused %}
-    <p class="alert alert-warning">
+    <p class="alert alert-dark">
         Minedrift er sat på pause af skaberen af denne blockchain
     </p>
 {% endif %}
 
-<p class="alert alert-info d-none" id="verification-delay-info">
+<p class="alert alert-dark d-none" id="verification-delay-info">
     Kontrollerer hash...
 </p>
-
-
 
 <h4 class="mb-4"><span class="text-black-50">Blockchain [{{ blockchain.id }}]</span>: {{ blockchain.title }}</h4>      
 
@@ -39,11 +37,11 @@
 
 <p>
     <i>
-        {% if blockchain.difficulty == blockchain.Level.NEM %}
+        {% if blockchain.difficulty == blockchain.Level.EASY %}
             Gyldige hashes starter med 0 eller 1
         {% elif blockchain.difficulty == blockchain.Level.MEDIUM %}
             Gyldige hashes starter med 0
-        {% elif blockchain.difficulty == blockchain.Level.SVÆR %}
+        {% elif blockchain.difficulty == blockchain.Level.DIFFICULT %}
             Gyldige hashes starter med 00
         {% endif %}
     </i>
@@ -87,12 +85,10 @@
             </div>
         </div>   
         {% if cur_hash %}
-            <div class="card mt-2">
-                <p class="alert">
-                    Beregnet hash (block #{{ block_num }}, nonce {{ nonce }})<br>
-                    <small>{{ cur_hash }}</small>
-                </p>
-            </div>
+            <p class="alert border mt-2">
+                Beregnet hash (block #{{ block_num }}, nonce {{ nonce }})<br>
+                <small>{{ cur_hash }}</small>
+            </p>
       
         {% endif %}    
     </div> 

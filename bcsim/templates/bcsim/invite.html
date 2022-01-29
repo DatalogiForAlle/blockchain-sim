@@ -7,13 +7,7 @@
 
 <h4 class="mb-4"><span class="text-black-50">Blockchain [{{ blockchain.id }}]</span>: {{ blockchain.title }}</h4>      
 
-
-<div class="p-3 mb-5 card" >
-    Du er logget på blockchainen "{{ blockchain.title }}" (blokckchain ID = {{ blockchain.id }}).
-    <br>
-    Dit navn/holdnavn er "{{ miner.name}}" (minearbejder-ID = {{ miner.id }}).
-    Din farve er 
-</div>
+{% include 'bcsim/business_card.html' %}
 
 <h6>Inviter nye deltagere/hold til denne blockchain</h6>
 
@@ -32,8 +26,6 @@
 </div>
 
 {% endblock content %}
-
-
 
 {% block javascript %}
 

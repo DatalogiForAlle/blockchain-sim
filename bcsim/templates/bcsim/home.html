@@ -10,12 +10,9 @@
 
 {% if miner %}
 
-  <div class="p-3 mb-5 card" >
-    Du er logget på blockchainen "{{ miner.blockchain.title }}" (blockchain ID = {{ miner.blockchain.id }}).<br>
-    Dit minearbejdernavn/holdnavn er "{{ miner.name}}" (minearbejder-ID = {{ miner.id }}).<br>
-  </div>
+  {% include 'bcsim/business_card.html' %}
 
-  <div class="alert alert-warning">
+  <div class="alert alert-secondary">
       Hvis du ønsker at deltage i eller oprette en anden blockchain, så skal du først <a href = "{% url 'bcsim:logout' %}">logge af</a> blockchainen med ID = {{ miner.blockchain.id }}.
   </div>
 
