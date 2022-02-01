@@ -1,8 +1,8 @@
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 import secrets
 import hashlib
 import random
+from .animal_avatar.animal_avatar import Avatar
 
 def new_unique_blockchain_id():
     """
@@ -22,15 +22,13 @@ class Blockchain(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_paused = models.BooleanField(default=False)
 
-    is_simple = models.BooleanField(default=True)    
-
     class Type(models.IntegerChoices):
-        SIMPLE = 1, ('Uden token-marked')
-        COMPLEX = 2, ('Med token-marked')
+        HAS_NO_TOKENS = 1, ('Uden token-marked')
+        HAS_TOKENS = 2, ('Med token-marked')
 
     type = models.PositiveSmallIntegerField(
         choices=Type.choices,
-        default=Type.SIMPLE
+        default=Type.HAS_NO_TOKENS
     )
 
     class Level(models.IntegerChoices):
@@ -43,8 +41,13 @@ class Blockchain(models.Model):
         default=Level.MEDIUM
     )
 
+    def has_tokens(self):
+        return self.type == self.Type.HAS_TOKENS
+            
+
     def __str__(self):
         return str(self.id)
+
 
     def save(self, *args, **kwargs):
         """
@@ -54,10 +57,12 @@ class Blockchain(models.Model):
         if blockchain_is_brand_new: 
             self.id = new_unique_blockchain_id()
         super(Blockchain, self).save(*args, **kwargs)
-    
+
+
     def toggle_pause(self):
         self.is_paused = not self.is_paused
         self.save()
+
 
     def hash_is_valid(self, hash):
 
@@ -74,8 +79,8 @@ class Blockchain(models.Model):
                 return True
 
         return False
-    
-    
+                    
+
 def new_unique_miner_id():
     """
     Create a new unique blockchain ID (8 alphabetic chars)
@@ -107,7 +112,7 @@ class Miner(models.Model):
         if not self.id:
             # we are creating a new miner (not updating an existing miner)
             self.id = new_unique_miner_id()
-        super(Miner, self).save(*args, **kwargs)
+        super(Miner, self).save(*args, **kwargs)   
 
     def num_mined_blocks(self):
         """ Number of mined blocks (genesis block not included) """
@@ -122,7 +127,7 @@ class Miner(models.Model):
         current_block_num = Block.objects.filter(
             blockchain=self.blockchain).count()
         return current_block_num != self.number_of_last_block_seen
-
+        
 
     def color(self):
         """
@@ -156,25 +161,81 @@ class Miner(models.Model):
 
 
 class Token(models.Model):
-    owner = models.ForeignKey(Miner, on_delete=models.CASCADE)
+    blockchain = models.ForeignKey(
+        Blockchain, null=True, blank=True, on_delete=models.CASCADE)
+    owner = models.ForeignKey(Miner, null=True, blank=True, on_delete=models.CASCADE)
     seed = models.CharField(max_length=10)
     price = models.IntegerField(null=True, blank=True)
+    available = models.BooleanField(default=True) # could be a method instead
 
     def for_sale(self):
         is_for_sale = self.price is not None
         return is_for_sale
 
-    def blockchain(self):
-        return self.owner.blockchain
-
+    def svg(self):
+        avatar = Avatar(self.seed)
+        svg = avatar.create_avatar()
+        return svg
 
 class Transaction(models.Model):
+    """
+    Transactions are generated in 3 different situations:
+    1. A new token is created when miner is joining game
+        sender = None
+        amount = None
+        token = Token(owner=miner, seed=random, price=None)
+
+    2. A miner has bought a token from the bank
+        sender = the miner
+        recipient = None
+        amount = amount
+        token = Token(owner=None, recipient=miner, price=price)
+
+    3. A miner has bought a token from another miner
+        sender = the miner buying the token
+        recipient = the miner selling the token
+        amount = amount
+        token = token
+    """
+    blockchain = models.ForeignKey(Blockchain, null=True, on_delete=models.CASCADE)
     sender = models.ForeignKey(
         Miner, on_delete=models.CASCADE, null=True, blank=True, related_name='sender')
     recipient = models.ForeignKey(
         Miner, on_delete=models.CASCADE, null=True, blank=True, related_name='recipient')
-    amount = models.IntegerField()
+    amount = models.IntegerField(blank=True, null=True)
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
+
+    def is_valid(self):
+        """"
+        Checks if:
+        - the token is for sale. 
+        - the amount is >= the price for the token
+        - the sender has enough money 
+        """
+        pass
+
+    def create_initial_transaction(miner):
+        """ Create initial transaction for new miner """
+        
+        random_seed = "".join(random.sample(
+            "abcdefghijklmnopqrstuvxyz0123456789", 10))
+
+        token = Token.objects.create(
+            blockchain=miner.blockchain,
+            owner=None,
+            seed=random_seed,
+            price=None,
+            available=True
+        )
+
+        Transaction.objects.create(
+            sender=None,
+            recipient=miner,
+            amount=None,
+            token=token,
+            blockchain=miner.blockchain
+        )
+
 
 
 class Block(models.Model):

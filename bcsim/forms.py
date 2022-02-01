@@ -14,7 +14,7 @@ class BlockchainForm(forms.ModelForm):
     """ Form used to create a blockchain """
     class Meta:
         model = Blockchain
-        fields = ['title', 'creator_name', 'type', 'difficulty', ]
+        fields = ['title', 'creator_name', 'type', 'difficulty']
         labels = {
             'title': 'Hvad skal vi kalde din blockchain?', 
             'creator_name': 'Dit navn/holdnavn',
@@ -25,9 +25,9 @@ class BlockchainForm(forms.ModelForm):
             'creator_name': 'Du deltager automatisk som minearbejder i din egen blockchain. Det er dit minearbejdernavn/holdnavn, du vælger her',
             'title': 'Titlen, du vælger her, vil fremgå som overskrift på din blockchain',
             'type':
-                'Hvilken slags blockchain ønsker ud?<br>' +
-                ' - Uden token-marked: Transaktionerne i denne type simulation er mellem tilfældige fiktive personer<br>' +
-                ' - Med token-marked: Minearbejderne køber og sælger tokens af hinanden<br>',
+                'Hvilken slags blockchain ønsker du at skabe?<br>' +
+                ' - Uden token-marked: Transaktionerne er mellem tilfældige fiktive personer<br>' +
+                ' - Med token-marked: Transaktioner opstår, når minearbejdere køber og sælger tokens af hinanden<br>',
             'difficulty': 
                 'Hvor svært skal det være at føje blokke til din blockchain?<br>' +
                 ' - Nem: Gyldige hashes starter med 0 eller 1 (ca. 12 % af alle hashes gyldige)<br>' +

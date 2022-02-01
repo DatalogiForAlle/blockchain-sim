@@ -6,8 +6,6 @@
 
 {% block content %}
 
-
-
 {% if blockchain.is_paused %}
     <p class="alert alert-dark">
         Minedrift er sat på pause af skaberen af denne blockchain
@@ -105,6 +103,28 @@
         hx-target="#block-list">
     </div>
 </div> 
+
+<h2>Ventende transaktioner</h2>
+<div class="table-responsive">
+    <table class="table table-sm table-striped" >
+        <thead>
+            <tr>
+                <th>Sender</th>
+                <th>Modtager</th>
+                <th>Beløb</th>
+                <th>Token</th>
+            </tr>
+        </thead>
+        {% for transaction in transactions %}
+            <tr>   
+                <td>{{ transaction.sender }}</td>
+                <td>{{ transaction.recipient.name }}</td>
+                <td>{{ transaction.amount }} </td>
+                <td>{{ transaction.token.svg|safe }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+</div>
 
 {% endblock %}
 

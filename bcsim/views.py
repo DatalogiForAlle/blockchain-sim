@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
-from .models import Blockchain, Block, Miner, Token
+from .models import Blockchain, Block, Miner, Token, Transaction
 from .forms import BlockchainForm, JoinForm, BlockForm, LoginForm
 from django.contrib import messages
 import time
@@ -24,12 +24,7 @@ def market(request):
         return redirect(reverse('bcsim:home'))
     else:
         
-        tokens = []
-        
-        for token in Token.objects.filter():
-            avatar = Avatar(token.seed)
-            svg = avatar.create_avatar()
-            tokens.append({'owner':token.owner, 'svg':svg, 'seed':token.seed, 'price':token.price})
+        tokens = Token.objects.filter(blockchain=miner.blockchain)
 
         context = {
             'tokens': tokens,
@@ -114,6 +109,10 @@ def home_view(request):
                 new_miner.miner_num = Miner.objects.filter(blockchain=blockchain).count()
                 new_miner.save()
 
+                # Create initial transactions for miner
+                if blockchain.has_tokens():
+                    Transaction.create_initial_transaction(new_miner)
+                
                 # set session variables for client
                 request.session['miner_id'] = new_miner.id
                 request.session['blockchain_id'] = request.POST['blockchain_id']
@@ -149,6 +148,10 @@ def home_view(request):
                 )
                 messages.success(request, f"Du har startet en ny blockchain!")
  
+                # Create initial transactions for miner
+                if new_blockchain.has_tokens():
+                    Transaction.create_initial_transaction(creator)
+
                 # redirect to mining page
                 return redirect(reverse('bcsim:mine'))
         
@@ -232,7 +235,6 @@ def mine_view(request):
             nonce=None
         )
 
-
         if request.method == "POST":
             
             if blockchain.is_paused:
@@ -274,7 +276,8 @@ def mine_view(request):
             'miner': miner,
             'form':form,
             'cur_hash': hash,
-            'next_block': potential_next_block
+            'next_block': potential_next_block,
+            'transactions':Transaction.objects.filter(blockchain=blockchain)
         }
         
         if miner.number_of_last_block_seen < current_block_num:

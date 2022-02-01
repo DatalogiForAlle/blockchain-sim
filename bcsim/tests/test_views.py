@@ -10,7 +10,6 @@ from django.core.exceptions import ValidationError
 from django.urls import reverse
 from ..models import Blockchain, Block
 from ..forms import BlockchainForm, BlockForm, JoinForm
-from ..views import next_payload
 from .factories import BlockChainFactory, BlockFactory, BlockFactory, MinerFactory
 import pytest
 from pytest_django.asserts import assertTemplateUsed, assertContains, assertNotContains
