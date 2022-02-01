@@ -56,10 +56,10 @@
                 Minedrift 
             </div>            
             <div class="card-body">
-                <p class="pb-1 mb-1">Blok #{{ block_num }}</p> 
+                <p class="pb-1 mb-1">Blok #{{ next_block.block_num }}</p> 
                 <p class="pb-1 mb-1">Minearbejder: <span class="px-3" style="background-color: {{ miner.color}}">{{ miner.name }}</span></p>
-                <p class="pb-1 mb-1">Seneste hash: <small>{{ prev_hash }}</small></p>
-                <p class="pb-1 mb-1">Payload: {{ payload }} </p>
+                <p class="pb-1 mb-1">Seneste hash: <small>{{ next_block.prev_hash }}</small></p>
+                <p class="pb-1 mb-1">Payload: {{ next_block.payload_str }} </p>
 
                     <form action="{% url 'bcsim:mine' %}" method="post" id="mine_form" novalidate>
                         {% csrf_token %}
@@ -86,7 +86,7 @@
         </div>   
         {% if cur_hash %}
             <p class="alert border mt-2">
-                Beregnet hash (block #{{ block_num }}, nonce {{ nonce }})<br>
+                Beregnet hash (block #{{ next_block.block_num }}, nonce {{ next_block.nonce }})<br>
                 <small>{{ cur_hash }}</small>
             </p>
       

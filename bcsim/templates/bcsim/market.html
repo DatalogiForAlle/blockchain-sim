@@ -5,7 +5,51 @@
 
 
 {% block content %}
-    {{svg}}
+    
+    <h2>Mine tokens</h2>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped" >
+            <thead>
+                <tr>
+                    <th>Owner</th>
+                    <th>Price</th>
+                    <th>Seed</th>
+                    <th>Token</th>
+                </tr>
+            </thead>
+            {% for token in tokens %}
+                {% if token.owner == miner %}
+                <tr>
+                    <td>{{ token.owner }}</td>
+                    <td>{{ token.price }}</td>
+                    <td>{{token.seed }} </td>
+                    <td>{{ token.svg|safe}}</td>
+                </tr>
+                {% endif %}
+            {% endfor %}
+        </table>
+    </div>
+    <h2>Alle tokens</h2>
+    <div class="table-responsive">
+        <table class="table table-sm table-striped" >
+            <thead>
+                <tr>
+                    <th>Owner</th>
+                    <th>Price</th>
+                    <th>Seed</th>
+                    <th>Token</th>
+                </tr>
+            </thead>
+            {% for token in tokens %}
+                <tr>
+                    <td>{{ token.owner }}</td>
+                    <td>{{ token.price }}</td>
+                    <td>{{token.seed }} </td>
+                    <td>{{ token.svg|safe}}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
 {% endblock content %}
 
 

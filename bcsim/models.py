@@ -22,6 +22,17 @@ class Blockchain(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_paused = models.BooleanField(default=False)
 
+    is_simple = models.BooleanField(default=True)    
+
+    class Type(models.IntegerChoices):
+        SIMPLE = 1, ('Uden token-marked')
+        COMPLEX = 2, ('Med token-marked')
+
+    type = models.PositiveSmallIntegerField(
+        choices=Type.choices,
+        default=Type.SIMPLE
+    )
+
     class Level(models.IntegerChoices):
         EASY = 1, ('Nem')
         MEDIUM = 2, ('Middel')
@@ -86,6 +97,9 @@ class Miner(models.Model):
     is_creator = models.BooleanField(default=False)
     number_of_last_block_seen = models.IntegerField(default=0)
 
+    def __str__(self):
+        return f"{self.name}[{self.id}]"
+
     def save(self, *args, **kwargs):
         """
         Set unique custom id for miner before creating a new blockchain object
@@ -140,25 +154,48 @@ class Miner(models.Model):
             color = f"rgb({red},{green},{blue}, 0.3)"
         return color
 
-MAX_NONCE = 2**32 - 1
+
+class Token(models.Model):
+    owner = models.ForeignKey(Miner, on_delete=models.CASCADE)
+    seed = models.CharField(max_length=10)
+    price = models.IntegerField(null=True, blank=True)
+
+    def for_sale(self):
+        is_for_sale = self.price is not None
+        return is_for_sale
+
+    def blockchain(self):
+        return self.owner.blockchain
+
+
+class Transaction(models.Model):
+    sender = models.ForeignKey(
+        Miner, on_delete=models.CASCADE, null=True, blank=True, related_name='sender')
+    recipient = models.ForeignKey(
+        Miner, on_delete=models.CASCADE, null=True, blank=True, related_name='recipient')
+    amount = models.IntegerField()
+    token = models.ForeignKey(Token, on_delete=models.CASCADE)
+
 
 class Block(models.Model):
 
     # block_num is not primary_key, as it is only unique together w. the blockchain
-    block_num = models.IntegerField(primary_key=False)
+    # block_num is None untill block is validated
+    block_num = models.IntegerField(primary_key=False, null=True, blank=True)
 
     blockchain = models.ForeignKey(Blockchain, on_delete=models.CASCADE)
 
     miner = models.ForeignKey(Miner, on_delete=models.CASCADE)
 
-    payload = models.CharField(max_length=200)
-
-    nonce = models.IntegerField(null=True, blank=False)
+    nonce = models.IntegerField(null=True, blank=True)
 
     prev_hash = models.CharField(max_length=200)
 
+    # transaction will be None when there is no token market
+    transaction = models.ForeignKey(Transaction, null=True, blank=True, on_delete=models.CASCADE)
+
     def hash(self):
-        s = f"{self.block_num}{self.miner.name}{self.prev_hash}{self.payload}{self.nonce}"
+        s = f"{self.block_num}{self.miner.name}{self.prev_hash}{self.payload_str}{self.nonce}"
         hash = hashlib.sha256(s.encode()).hexdigest()
         return hash
 
@@ -167,6 +204,23 @@ class Block(models.Model):
         return hash, self.blockchain.hash_is_valid(hash)
 
 
-class Token(models.Model):
-    miner_id = models.ForeignKey(Miner, on_delete=models.CASCADE)
-    seed = models.CharField(max_length=10)
+    def payload_str(self):
+
+        if self.block_num == 0:
+            return 'Genesis'
+
+        first_names = ('John', 'Andy', 'Joe', 'Sandy', 'Sally',
+                    'Alice', 'Joanna', 'Serena', 'Oliver', 'Steven')
+
+        last_names = ('Johnson', 'Smith', 'Williams', 'Brown',
+                    'Silbersmith', 'Garcia', 'Miller', 'Davis', 'Jones', 'Lopez')
+
+        random.seed(self.blockchain.id + str(self.block_num))
+
+        sender = f"{random.choice(first_names)} {random.choice(last_names)}"
+        recipient = f"{random.choice(first_names)} {random.choice(last_names)}"
+
+        amount = random.randint(1, 100)
+
+        return f"{amount} DIKU-coins fra {sender} til {recipient}"
+

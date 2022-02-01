@@ -4,27 +4,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
-from .models import Blockchain, Block, Miner
+from .models import Blockchain, Block, Miner, Token
 from .forms import BlockchainForm, JoinForm, BlockForm, LoginForm
 from django.contrib import messages
 import time
+from .animal_avatar.animal_avatar import Avatar
 
-def next_payload(blockchain_id, current_block_num):
-
-    first_names = ('John', 'Andy', 'Joe', 'Sandy', 'Sally',
-               'Alice', 'Joanna', 'Serena', 'Oliver', 'Steven')
-    
-    last_names = ('Johnson', 'Smith', 'Williams', 'Brown',
-              'Silbersmith', 'Garcia', 'Miller', 'Davis', 'Jones', 'Lopez')
-        
-    random.seed(blockchain_id + str(current_block_num))
-
-    sender = f"{random.choice(first_names)} {random.choice(last_names)}"
-    recipient = f"{random.choice(first_names)} {random.choice(last_names)}"
-
-    amount = random.randint(1, 100)
-
-    return f"{amount} DIKU-coins fra {sender} til {recipient}"
 
 def del_session_vars(session_vars, request):
     for var in session_vars:
@@ -32,8 +17,26 @@ def del_session_vars(session_vars, request):
             del request.session[var]
 
 def market(request):
-    context = {'svg': 'svg as string'}
-    return render(request, 'bcsim/market.html', context)
+    
+    try:
+        miner = Miner.objects.get(id=request.session['miner_id'])
+    except:
+        return redirect(reverse('bcsim:home'))
+    else:
+        
+        tokens = []
+        
+        for token in Token.objects.filter():
+            avatar = Avatar(token.seed)
+            svg = avatar.create_avatar()
+            tokens.append({'owner':token.owner, 'svg':svg, 'seed':token.seed, 'price':token.price})
+
+        context = {
+            'tokens': tokens,
+            'miner': miner
+        }
+
+        return render(request, 'bcsim/market.html', context)
 
 @require_GET
 def invite_view(request):
@@ -141,7 +144,6 @@ def home_view(request):
                     block_num=0,
                     blockchain=new_blockchain,
                     miner = creator,
-                    payload="Genesis",
                     nonce="0",
                     prev_hash="0",
                 )
@@ -172,7 +174,7 @@ def home_view(request):
                 # redirect to mining page
                 return redirect(reverse('bcsim:mine'))
     
-    
+
     context = {
         'create_form': create_form,
         'join_form': join_form,
@@ -182,6 +184,7 @@ def home_view(request):
     if 'miner_id' in request.session:
         miner = Miner.objects.get(id=request.session['miner_id'])
         context['miner'] = miner
+        context['blockchain'] = miner.blockchain
 
     context['expand'] = expand
 
@@ -217,12 +220,18 @@ def mine_view(request):
         blocks = Block.objects.filter(
             blockchain=blockchain).order_by('-block_num')
         last_block = blocks.first()        
-        prev_hash = last_block.hash()
         current_block_num = len(blocks)
-        payload = next_payload(blockchain.id, current_block_num)
         form = BlockForm()
-        nonce = None
         hash = None
+
+        potential_next_block = Block(
+            block_num=current_block_num,
+            blockchain=blockchain,
+            miner=miner,
+            prev_hash=last_block.hash(),
+            nonce=None
+        )
+
 
         if request.method == "POST":
             
@@ -236,19 +245,10 @@ def mine_view(request):
                     messages.error(
                         request, f"En anden minearbejder tilføjede blok #{miner.number_of_last_block_seen} før dig!")
                     return redirect(reverse('bcsim:mine'))
-                
                 nonce = form.cleaned_data['nonce']
+                potential_next_block.nonce = nonce
 
-                new_block = Block(
-                    block_num=current_block_num,
-                    blockchain=blockchain,
-                    miner=miner,
-                    prev_hash=prev_hash,
-                    payload=payload,
-                    nonce=nonce,
-                )
-
-                hash, hash_is_valid = new_block.hash_is_valid()
+                hash, hash_is_valid = potential_next_block.hash_is_valid()
 
                 if 'add_to_chain' in request.POST:
                     
@@ -261,28 +261,25 @@ def mine_view(request):
                         messages.error(
                             request, f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
                     else:    
-                        new_block.save()    
+                        potential_next_block.save()    
                         miner.add_miner_reward()
                         messages.success(
                             request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
 
                         return redirect(reverse('bcsim:mine'))
 
-        
         context = {
             'blocks': blocks,
             'blockchain': blockchain,
-            'block_num': current_block_num,
             'miner': miner,
-            'prev_hash': prev_hash,
-            'payload': payload,
             'form':form,
-            'nonce': nonce,
-            'cur_hash': hash
+            'cur_hash': hash,
+            'next_block': potential_next_block
         }
         
-        miner.number_of_last_block_seen = current_block_num
-        miner.save()
+        if miner.number_of_last_block_seen < current_block_num:
+            miner.number_of_last_block_seen = current_block_num
+            miner.save()
 
         return render(request, 'bcsim/mine.html', context)
 
