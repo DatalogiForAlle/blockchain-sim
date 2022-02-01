@@ -182,6 +182,7 @@ def home_view(request):
     if 'miner_id' in request.session:
         miner = Miner.objects.get(id=request.session['miner_id'])
         context['miner'] = miner
+        context['blockchain'] = miner.blockchain
 
     context['expand'] = expand
 
