@@ -3,6 +3,7 @@ import secrets
 import hashlib
 import random
 from .animal_avatar.animal_avatar import Avatar
+from time import perf_counter
 
 def new_unique_blockchain_id():
     """
@@ -103,7 +104,7 @@ class Miner(models.Model):
     number_of_last_block_seen = models.IntegerField(default=0)
 
     def __str__(self):
-        return f"{self.name}[{self.id}]"
+        return f"{self.name}"
 
     def save(self, *args, **kwargs):
         """
@@ -127,7 +128,9 @@ class Miner(models.Model):
         current_block_num = Block.objects.filter(
             blockchain=self.blockchain).count()
         return current_block_num != self.number_of_last_block_seen
-        
+
+    def tokens(self):
+        return Token.objects.filter(owner=self)
 
     def color(self):
         """
@@ -166,57 +169,124 @@ class Token(models.Model):
     owner = models.ForeignKey(Miner, null=True, blank=True, on_delete=models.CASCADE)
     seed = models.CharField(max_length=10)
     price = models.IntegerField(null=True, blank=True)
-    available = models.BooleanField(default=True) # could be a method instead
+    trade_in_process = models.BooleanField(default=False) 
 
-    def for_sale(self):
-        is_for_sale = self.price is not None
-        return is_for_sale
-
-    def svg(self):
-        avatar = Avatar(self.seed)
+    def is_for_sale(self):
+        return (self.price is not None) and (not self.trade_in_process)
+        
+    def big_svg(self):
+        avatar = Avatar(self.seed, size=160)
         svg = avatar.create_avatar()
         return svg
+
+    def small_svg(self):
+        avatar = Avatar(self.seed, size=60)
+        svg = avatar.create_avatar()
+        return svg
+        
 
 class Transaction(models.Model):
     """
     Transactions are generated in 3 different situations:
     1. A new token is created when miner is joining game
-        sender = None
-        amount = None
+        buyer = the miner
+        seller = None
         token = Token(owner=miner, seed=random, price=None)
 
     2. A miner has bought a token from the bank
-        sender = the miner
-        recipient = None
-        amount = amount
-        token = Token(owner=None, recipient=miner, price=price)
+        buyer = the miner
+        seller = None
+        token = Token(owner=None, seller=miner, price=price)
 
-    3. A miner has bought a token from another miner
-        sender = the miner buying the token
-        recipient = the miner selling the token
-        amount = amount
+    3. A miner wants to buy a token from another miner
+        buyer = the miner buying the token
+        seller = the miner selling the token
         token = token
     """
     blockchain = models.ForeignKey(Blockchain, null=True, on_delete=models.CASCADE)
-    sender = models.ForeignKey(
-        Miner, on_delete=models.CASCADE, null=True, blank=True, related_name='sender')
-    recipient = models.ForeignKey(
-        Miner, on_delete=models.CASCADE, null=True, blank=True, related_name='recipient')
-    amount = models.IntegerField(blank=True, null=True)
+
+    # The buyer is the miner paying the money (or the miner receiving the token in the case of an initial transactions)
+    buyer = models.ForeignKey(
+        Miner, on_delete=models.CASCADE, null=True, related_name='buyer')
+
+    # The seller is the miner receiving the money (will be None for initial transactions)
+    seller = models.ForeignKey(
+        Miner, on_delete=models.CASCADE, null=True, related_name='seller')
+
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
 
+    processed = models.BooleanField(default=False)
+
+    amount = models.IntegerField(null=True)
+    
     def is_valid(self):
-        """"
-        Checks if:
-        - the token is for sale. 
-        - the amount is >= the price for the token
-        - the sender has enough money 
-        """
-        pass
+     
+        if self.is_miner_to_miner_transaction():        
+            # Buyer has enough money
+            if not self.buyer.balance >= self.amount:
+                return False, "Køberen har ikke penge nok"
+
+            # Seller owns the token
+            if not self.token.owner == self.seller:
+                return False, "Sælgeren ejer ikke længere tokenet"
+            
+            # Token er til salg
+            if not self.token.price:
+                return False, "Tokenet er ikke til salg"
+            
+            return True, ""
+        
+        elif self.is_initial_transaction():
+            return True, ""
+
+        else: 
+            assert False, "Not implemented yet"
+    
+    def process(self, miner):
+
+        transaction_is_valid, error_message = self.is_valid()
+        if transaction_is_valid:
+            if self.is_miner_to_miner_transaction():
+                self.token.trade_in_process = False
+                self.token.price = None
+                self.token.save()
+    
+                miner.refresh_from_db()
+                miner.add_miner_reward()
+        else:
+            if self.is_miner_to_miner_transaction():
+            
+                self.buyer.balance -= self.amount
+                self.seller.balance += self.amount
+                self.token.owner = self.buyer
+                self.token.trade_in_process = False
+                self.token.price = None
+                self.buyer.save()
+                self.seller.save()
+                self.token.save()
+
+            elif self.is_initial_transaction():
+                self.token.owner = self.buyer
+                self.token.save()
+
+            elif self.is_payment_to_bank_for_token():
+                assert False, "Not implemented yet"                                  
+                # if køb af ny ressource:
+                #     token -> miner 
+                #     træk penge fra miner (kræver viden om pris og token)
+
+
+
+        self.processed = True
+        self.save()
+    
+        return transaction_is_valid, error_message
+ 
 
     def create_initial_transaction(miner):
         """ Create initial transaction for new miner """
-        
+        random.seed(perf_counter())
+
         random_seed = "".join(random.sample(
             "abcdefghijklmnopqrstuvxyz0123456789", 10))
 
@@ -225,16 +295,37 @@ class Transaction(models.Model):
             owner=None,
             seed=random_seed,
             price=None,
-            available=True
+            trade_in_process=False,
         )
 
         Transaction.objects.create(
-            sender=None,
-            recipient=miner,
-            amount=None,
+            buyer=miner,
+            seller=None,
             token=token,
-            blockchain=miner.blockchain
+            blockchain=miner.blockchain,
+            processed = False,
+            amount= None
         )
+    
+    def is_initial_transaction(self):
+        return self.amount is None
+    
+    def is_payment_to_bank_for_token(self):
+        pass
+
+    def is_miner_to_miner_transaction(self):
+        return self.seller is not None
+
+    def payload_str(self):
+        
+        if self.is_initial_transaction():
+            payload = f"{self.token.small_svg()} til {self.buyer.name} fra NFT-banken"
+
+        elif self.is_miner_to_miner_transaction():
+            payload = f"{self.amount} DIKU-coins fra {self.buyer.name} til {self.seller.name} for {self.token.small_svg()}"
+        else:
+            payload = "Other kind of payload (fix this BUG!)"
+        return payload 
 
 
 
@@ -256,7 +347,7 @@ class Block(models.Model):
     transaction = models.ForeignKey(Transaction, null=True, blank=True, on_delete=models.CASCADE)
 
     def hash(self):
-        s = f"{self.block_num}{self.miner.name}{self.prev_hash}{self.payload_str}{self.nonce}"
+        s = f"{self.block_num}{self.miner.name}{self.prev_hash}{self.random_payload_str}{self.nonce}"
         hash = hashlib.sha256(s.encode()).hexdigest()
         return hash
 
@@ -265,7 +356,8 @@ class Block(models.Model):
         return hash, self.blockchain.hash_is_valid(hash)
 
 
-    def payload_str(self):
+    def random_payload_str(self):
+        """ Generates random payload string (used in games with no token market) """
 
         if self.block_num == 0:
             return 'Genesis'
@@ -278,10 +370,10 @@ class Block(models.Model):
 
         random.seed(self.blockchain.id + str(self.block_num))
 
-        sender = f"{random.choice(first_names)} {random.choice(last_names)}"
-        recipient = f"{random.choice(first_names)} {random.choice(last_names)}"
+        buyer = f"{random.choice(first_names)} {random.choice(last_names)}"
+        seller = f"{random.choice(first_names)} {random.choice(last_names)}"
 
         amount = random.randint(1, 100)
 
-        return f"{amount} DIKU-coins fra {sender} til {recipient}"
+        return f"{amount} DIKU-coins fra {buyer} til {seller}"
 

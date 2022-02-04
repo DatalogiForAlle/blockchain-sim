@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 from .models import Blockchain, Block, Miner, Token, Transaction
-from .forms import BlockchainForm, JoinForm, BlockForm, LoginForm
+from .forms import BlockchainForm, JoinForm, BlockForm, LoginForm, TokenPriceForm
 from django.contrib import messages
 import time
 from .animal_avatar.animal_avatar import Avatar
@@ -16,19 +16,74 @@ def del_session_vars(session_vars, request):
         if var in request.session:
             del request.session[var]
 
-def market(request):
-    
+
+@require_POST
+def buy_token_view(request):
     try:
         miner = Miner.objects.get(id=request.session['miner_id'])
     except:
         return redirect(reverse('bcsim:home'))
     else:
+        token_id = int(request.POST['token_id'])
+        token = get_object_or_404(
+            Token, pk=token_id)
+
+        if not token.is_for_sale():
+            return redirect(reverse('bcsim:home'))
+
+        seller_id = request.POST['seller_id']
+        seller = get_object_or_404(Miner, pk=seller_id)
+
+        Transaction.objects.create(
+            blockchain=miner.blockchain,
+            buyer=miner,
+            seller=seller,
+            token=token,
+            amount=token.price,
+            processed=False)
+
+        token.trade_in_process = True
+        token.save()
+
+        return redirect(reverse('bcsim:market'))
+
+def market_view(request):
+    
+    try:
+        miner = Miner.objects.get(id=request.session['miner_id'])
+    except:
+        return redirect(reverse('bcsim:home'))  
+    else:
+        token_price_form = TokenPriceForm()
+
+        if request.method == 'POST':
+            token_price_form = TokenPriceForm(request.POST)
+            token_id = int(request.POST['token_id'])
+            token = get_object_or_404(
+                Token, pk=token_id)
+            if token_price_form.is_valid():
+                if token.price:
+                    # Price is already set, so we redirect
+                    return redirect(reverse('bcsim:market'))
+                elif token.owner != miner: 
+                    # Only the owner of a token should be able to set the price
+                    return redirect(reverse('bcsim:market'))
+
+                token_price = token_price_form.cleaned_data['price']
+                token.price = token_price
+                token.save()
+                return redirect(reverse('bcsim:market'))
+            
+        tokens = Token.objects.filter(blockchain=miner.blockchain).order_by('-price')
         
-        tokens = Token.objects.filter(blockchain=miner.blockchain)
+#        tokens_for_sale = tokens.exclude(owner=miner).filter(price__isnull=False)
 
         context = {
             'tokens': tokens,
-            'miner': miner
+ #           'tokens_for_sale': tokens_for_sale,
+            'miner': miner,
+            'blockchain': miner.blockchain,
+            'form': token_price_form
         }
 
         return render(request, 'bcsim/market.html', context)
@@ -112,8 +167,9 @@ def home_view(request):
                 # Create initial transactions for miner
                 if blockchain.has_tokens():
                     Transaction.create_initial_transaction(new_miner)
-                
-                # set session variables for client
+                    Transaction.create_initial_transaction(new_miner)
+
+                # Set session variables for client
                 request.session['miner_id'] = new_miner.id
                 request.session['blockchain_id'] = request.POST['blockchain_id']
 
@@ -148,8 +204,9 @@ def home_view(request):
                 )
                 messages.success(request, f"Du har startet en ny blockchain!")
  
-                # Create initial transactions for miner
+                # Create initial transactions for creator
                 if new_blockchain.has_tokens():
+                    Transaction.create_initial_transaction(creator)
                     Transaction.create_initial_transaction(creator)
 
                 # redirect to mining page
@@ -200,7 +257,7 @@ def home_view(request):
     return render(request, 'bcsim/home.html', context)
 
 @require_POST
-def toggle_pause(request):
+def toggle_pause_view(request):
     try:
         miner = Miner.objects.get(id=request.session['miner_id'])
     except:
@@ -214,6 +271,7 @@ def toggle_pause(request):
 
 
 def mine_view(request):
+    
     try:
         miner = Miner.objects.get(id=request.session['miner_id'])
     except:
@@ -227,27 +285,48 @@ def mine_view(request):
         form = BlockForm()
         hash = None
 
+        if blockchain.has_tokens():
+            unprocessed_transactions = Transaction.objects.filter(
+                    blockchain=blockchain, processed=False)
+            if unprocessed_transactions.count() == 0:
+                next_transaction = None
+            else: 
+                next_transaction = unprocessed_transactions.first()
+        else:
+            unprocessed_transactions = None
+            next_transaction = None
+
         potential_next_block = Block(
             block_num=current_block_num,
             blockchain=blockchain,
             miner=miner,
             prev_hash=last_block.hash(),
-            nonce=None
+            nonce=None,
+            transaction=next_transaction
         )
+
 
         if request.method == "POST":
             
             if blockchain.is_paused:
                 return redirect(reverse('bcsim:mine'))
-                   
+            
+            if blockchain.has_tokens():
+                if next_transaction is None:
+                    messages.error(
+                        request, f"Der er ingen transaktioner at mine!")
+                    return redirect(reverse('bcsim:mine'))
+
             form = BlockForm(request.POST)
-            if form.is_valid():     
-                
+
+            if form.is_valid():                     
                 if miner.missed_last_block():
                     messages.error(
                         request, f"En anden minearbejder tilføjede blok #{miner.number_of_last_block_seen} før dig!")
                     return redirect(reverse('bcsim:mine'))
+
                 nonce = form.cleaned_data['nonce']
+
                 potential_next_block.nonce = nonce
 
                 hash, hash_is_valid = potential_next_block.hash_is_valid()
@@ -262,13 +341,29 @@ def mine_view(request):
                     if not hash_is_valid:    
                         messages.error(
                             request, f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
-                    else:    
-                        potential_next_block.save()    
-                        miner.add_miner_reward()
-                        messages.success(
-                            request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
+                    else: 
+                        if not blockchain.has_tokens():
+                            potential_next_block.save()
+                            miner.add_miner_reward()
+                            messages.success(
+                                request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
+
+                        if blockchain.has_tokens():                                
+                            transaction_is_valid, error_message = next_transaction.process(miner)
+                            if transaction_is_valid:
+                                unprocessed_transactions = Transaction.objects.filter(
+                                    blockchain=blockchain, processed=False)
+                                potential_next_block.save()
+            
+                                messages.success(
+                                    request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
+                            else:
+                                messages.info(
+                                    request, f"Transaktionen er ugyldig!: {error_message}"
+                                )
 
                         return redirect(reverse('bcsim:mine'))
+
 
         context = {
             'blocks': blocks,
@@ -277,13 +372,14 @@ def mine_view(request):
             'form':form,
             'cur_hash': hash,
             'next_block': potential_next_block,
-            'transactions':Transaction.objects.filter(blockchain=blockchain)
+            'unprocessed_transactions': unprocessed_transactions
         }
         
         if miner.number_of_last_block_seen < current_block_num:
             miner.number_of_last_block_seen = current_block_num
             miner.save()
 
+        
         return render(request, 'bcsim/mine.html', context)
 
 
@@ -302,4 +398,4 @@ def block_list_view_htmx(request):
     blocks = Block.objects.filter(
         blockchain=blockchain).order_by('-block_num')
 
-    return render(request, 'bcsim/block_list.html', {'blocks': blocks})
+    return render(request, 'bcsim/block_list.html', {'blocks': blocks, 'blockchain': blockchain})

@@ -45,10 +45,8 @@
     </i>
 </p>
 
-
 <div class="row mb-5">
     <div class="col col-12 col-lg-6">
-       
         <div class="card">
             <div class="card-header">
                 Minedrift 
@@ -57,16 +55,20 @@
                 <p class="pb-1 mb-1">Blok #{{ next_block.block_num }}</p> 
                 <p class="pb-1 mb-1">Minearbejder: <span class="px-3" style="background-color: {{ miner.color}}">{{ miner.name }}</span></p>
                 <p class="pb-1 mb-1">Seneste hash: <small>{{ next_block.prev_hash }}</small></p>
-                <p class="pb-1 mb-1">Payload: {{ next_block.payload_str }} </p>
-
+                <p class="pb-1 mb-1">
+                    Payload: 
+                    {% if blockchain.has_tokens %}
+                        {{ unprocessed_transactions.first.payload_str|safe }}
+                    {% else %}
+                        {{ next_block.payload_str }} 
+                    {% endif %}
+                </p>
                     <form action="{% url 'bcsim:mine' %}" method="post" id="mine_form" novalidate>
                         {% csrf_token %}
                         {{ form|crispy }}
                         <input type="hidden" name="submit-purpose" value="true" id="submit-purpose">
                     </form>
-
-                    <div class="d-flex justify-content-center">
-                        
+                    <div class="d-flex justify-content-center"> 
                         <button class="btn btn-outline-primary mr-2" type="button" id="add_to_chain_btn" onclick ="add_to_chain_btn_handler()">
                             Tilføj til blockchain
                         </button>
@@ -77,9 +79,7 @@
                         <button class="btn btn-outline-primary" onclick="plus_one()">
                             +1 
                         </button>
-              
                     </div>
-            
             </div>
         </div>   
         {% if cur_hash %}
@@ -87,15 +87,40 @@
                 Beregnet hash (block #{{ next_block.block_num }}, nonce {{ next_block.nonce }})<br>
                 <small>{{ cur_hash }}</small>
             </p>
+        {% endif %}  
+        {% if blockchain.has_tokens %}
+            <h4 class="mt-5">Ventende transaktioner (skal live-opdateres...)</h4 >
+            <div class="table-responsive">
+                <table class="table table-sm table-striped" >
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Køber</th>
+                            <th>Sælger</th>
+                            <th>Pris</th>
+                            <th>Payload</th>
+                        </tr>
+                    </thead>
+                    {% for transaction in unprocessed_transactions %}
+                        {% if forloop.counter > 1 %}
+                            <tr>   
+                                <td>{{ transaction.id }}</td>
+                                <td>{{ transaction.buyer }}</td>
+                                <td>{{ transaction.seller }}</td>
+                                <td>{{ transaction.token.price }} </td>
+                                <td>{{ transaction.payload_str|safe }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </table>
+            </div>
+        {% endif %}
       
-        {% endif %}    
     </div> 
-
-    <!-- Column with list of blocks in chain" -->
+    <!-- Column with list of all blocks in blockchain" -->
     <div class="col col-12 col-lg-6 mt-5 mb-3 my-lg-0" id="block-list">
         {% include 'bcsim/block_list.html' %}
     </div>
-
     <!-- HTMX: Update above list every every x seconds. --> 
     <div 
         hx-get="{% url 'bcsim:block_list' %}"
@@ -104,27 +129,6 @@
     </div>
 </div> 
 
-<h2>Ventende transaktioner</h2>
-<div class="table-responsive">
-    <table class="table table-sm table-striped" >
-        <thead>
-            <tr>
-                <th>Sender</th>
-                <th>Modtager</th>
-                <th>Beløb</th>
-                <th>Token</th>
-            </tr>
-        </thead>
-        {% for transaction in transactions %}
-            <tr>   
-                <td>{{ transaction.sender }}</td>
-                <td>{{ transaction.recipient.name }}</td>
-                <td>{{ transaction.amount }} </td>
-                <td>{{ transaction.token.svg|safe }}</td>
-            </tr>
-        {% endfor %}
-    </table>
-</div>
 
 {% endblock %}
 

@@ -29,19 +29,22 @@ class MinerAdmin(admin.ModelAdmin):
 
 class TokenAdmin(admin.ModelAdmin):
     list_display = (
+        'pk',
         'owner',
         'seed',
         'price',
-        'available'
+        'trade_in_process'
     )
 
 
 class TransactionAdmin(admin.ModelAdmin):
     list_display = (
-        'sender',
-        'recipient',
-        'amount',
-        'token'
+        'blockchain',
+        'buyer',
+        'seller',
+        'token',
+        'processed',
+        'amount'
     )
 
 

@@ -88,7 +88,11 @@ class BlockForm(forms.ModelForm):
     def clean_nonce(self):
         """ Nonce has to be a non-zero positive 32 bit integer """
         nonce = self.cleaned_data['nonce']
-        if nonce:
+        if nonce is None:
+            raise forms.ValidationError(
+            'Du skal angive Nonce')
+
+        else:
             if not 0 <= nonce <= 2**32 - 1:
                 raise forms.ValidationError(
                     'Nonce skal være et ikke-negativt heltal på max 4294967295 (32-bit)')
@@ -120,3 +124,18 @@ class LoginForm(forms.Form):
                 'Der findes ingen minearbejder med dette ID.')
         return miner_id
 
+
+class TokenPriceForm(forms.Form):
+    price = forms.IntegerField()
+    
+    def clean_price(self):
+        max_price = 10**6
+        price = self.cleaned_data['price']
+        if price < 0:
+            raise forms.ValidationError(
+                'Prisen kan ikke være negativ.')
+        elif price > max_price:
+            raise forms.ValidationError(
+                f'Prisen kan ikke være større end {max_price}')
+
+        return price
