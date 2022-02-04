@@ -200,7 +200,7 @@ def home_view(request):
                     blockchain=new_blockchain,
                     miner = creator,
                     nonce="0",
-                    prev_hash="0",
+                    prev_hash="0"
                 )
                 messages.success(request, f"Du har startet en ny blockchain!")
  

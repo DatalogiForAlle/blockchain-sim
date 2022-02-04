@@ -317,7 +317,7 @@ class Transaction(models.Model):
         return self.seller is not None
 
     def payload_str(self):
-        
+
         if self.is_initial_transaction():
             payload = f"{self.token.small_svg()} til {self.buyer.name} fra NFT-banken"
 
@@ -327,6 +327,19 @@ class Transaction(models.Model):
             payload = "Other kind of payload (fix this BUG!)"
         return payload 
 
+
+    def payload_str_for_hash(self):
+
+        if self.is_initial_transaction():
+            payload = f"{self.token.seed} til {self.buyer.name} fra NFT-banken"
+
+        elif self.is_miner_to_miner_transaction():
+            payload = f"{self.amount} DIKU-coins fra {self.buyer.name} til {self.seller.name} for {self.token.seed}"
+       
+        else: 
+            assert False, "not implemented yett"
+
+        return payload
 
 
 class Block(models.Model):
@@ -346,8 +359,16 @@ class Block(models.Model):
     # transaction will be None when there is no token market
     transaction = models.ForeignKey(Transaction, null=True, blank=True, on_delete=models.CASCADE)
 
+
     def hash(self):
-        s = f"{self.block_num}{self.miner.name}{self.prev_hash}{self.random_payload_str}{self.nonce}"
+        if self.block_num == 0:
+            payload_str = 'genesis'
+        elif not self.blockchain.has_tokens():
+            payload_str = self.random_payload_str()
+        else:
+            payload_str = self.transaction.payload_str_for_hash()
+            print(payload_str)
+        s = f"{self.block_num}{self.miner.name}{self.prev_hash}{payload_str}{self.nonce}"
         hash = hashlib.sha256(s.encode()).hexdigest()
         return hash
 
