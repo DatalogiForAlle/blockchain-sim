@@ -245,6 +245,7 @@ class Transaction(models.Model):
     def process(self, miner):
 
         transaction_is_valid, error_message = self.is_valid()
+
         if transaction_is_valid:
             if self.is_miner_to_miner_transaction():
                 self.token.trade_in_process = False
@@ -253,6 +254,11 @@ class Transaction(models.Model):
     
                 miner.refresh_from_db()
                 miner.add_miner_reward()
+
+            elif self.is_initial_transaction():
+                self.token.owner = self.buyer
+                self.token.save()
+        
         else:
             if self.is_miner_to_miner_transaction():
             
@@ -261,13 +267,11 @@ class Transaction(models.Model):
                 self.token.owner = self.buyer
                 self.token.trade_in_process = False
                 self.token.price = None
+ 
                 self.buyer.save()
                 self.seller.save()
                 self.token.save()
 
-            elif self.is_initial_transaction():
-                self.token.owner = self.buyer
-                self.token.save()
 
             elif self.is_payment_to_bank_for_token():
                 assert False, "Not implemented yet"                                  
