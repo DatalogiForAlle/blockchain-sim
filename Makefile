@@ -17,7 +17,6 @@ develop:  ## Run development server
 stop: ## Stop developmentment server
 	docker-compose -f docker-compose.dev.yml down --remove-orphans
 
-
 shell:  ## Open shell in running docker development container
 	docker-compose -f docker-compose.dev.yml exec web /bin/bash
 
@@ -47,10 +46,13 @@ test_views: ## Execute tests within the docker image
 
 # ---------- Codestyle  ---------- #
 tidy_bcsim: # Reformat source code to make it adhere to PEP8
-	pipenv run autopep8 --in-place --recursive --exclude=migrations,animal_avatar bcsim
+	docker-compose -f docker-compose.dev.yml exec web autopep8 --in-place --recursive --exclude=migrations,animal_avatar bcsim
 
-style_check: # Check PEP8
-	pipenv run pycodestyle bcsim/views.py
+check_views: # Check PEP8 standards for views.py file
+	docker-compose -f docker-compose.dev.yml exec web pycodestyle bcsim/views.py
+
+check_views_show_source: #jierj
+	docker-compose -f docker-compose.dev.yml exec web pycodestyle --show-source --show-pep8 bcsim/views.py
 
 # ---------- Production ---------- #
 production_stop: ## Stop production server

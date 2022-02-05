@@ -77,7 +77,7 @@ def market_view(request):
     tokens = Token.objects.filter(
         blockchain=miner.blockchain).order_by('-price')
 
-#        tokens_for_sale = tokens.exclude(owner=miner).filter(price__isnull=False)
+#   tokens_for_sale = tokens.exclude(owner=miner).filter(price__isnull=False)
 
     context = {
         'tokens': tokens,
@@ -123,8 +123,11 @@ def logout_view(request):
     all_session_vars = ['miner_id', 'blockchain_id']
     del_session_vars(all_session_vars, request)
 
-    messages.info(
-        request, f"Du forlod blockchainen med ID={blockchain_id}. Dit minearbejder-ID var {miner_id}.")
+    mgs = (
+        f"Du forlod blockchainen med ID={blockchain_id}."
+        f"Dit minearbejder-ID var {miner_id}."
+    )
+    messages.info(request, mgs)
 
     return redirect(reverse('bcsim:home'))
 
@@ -172,7 +175,8 @@ def home_view(request):
 
                 # Set session variables for client
                 request.session['miner_id'] = new_miner.id
-                request.session['blockchain_id'] = request.POST['blockchain_id']
+                request.session['blockchain_id'] = request.POST[
+                    'blockchain_id']
 
                 messages.success(request, "Du deltager nu i en blockchain!")
 
@@ -191,7 +195,10 @@ def home_view(request):
 
                 # create miner
                 creator = Miner.objects.create(
-                    name=create_form.cleaned_data['creator_name'], blockchain=new_blockchain, miner_num=0, is_creator=True)
+                    name=create_form.cleaned_data['creator_name'],
+                    blockchain=new_blockchain,
+                    miner_num=0,
+                    is_creator=True)
                 request.session['miner_id'] = creator.id
                 request.session['blockchain_id'] = new_blockchain.id
 
@@ -319,7 +326,8 @@ def mine_view(request):
         if form.is_valid():
             if miner.missed_last_block():
                 messages.error(
-                    request, f"En anden minearbejder tilføjede blok #{miner.number_of_last_block_seen} før dig!")
+                    request,
+                    f"En anden minearbejder tilføjede blok #{miner.number_of_last_block_seen} før dig!")
                 return redirect(reverse('bcsim:mine'))
 
             nonce = form.cleaned_data['nonce']
@@ -337,7 +345,8 @@ def mine_view(request):
 
                 if not hash_is_valid:
                     messages.error(
-                        request, f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
+                        request,
+                        f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
                 else:
                     if not blockchain.has_tokens():
                         potential_next_block.save()
@@ -357,8 +366,7 @@ def mine_view(request):
                                 request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
                         else:
                             messages.info(
-                                request, f"Transaktionen er ugyldig!: {error_message}"
-                            )
+                                request, f"Transaktionen er ugyldig!: {error_message}")
 
                     return redirect(reverse('bcsim:mine'))
 
@@ -385,9 +393,10 @@ def block_list_view_htmx(request):
     try:
         blockchain_id = request.session['blockchain_id']
         blockchain = Blockchain.objects.get(pk=blockchain_id)
-    except:
+    except BaseException:
         return HttpResponse("Error: Client does not belong to blockchain")
     else:
         blocks = Block.objects.filter(
             blockchain=blockchain).order_by('-block_num')
-        return render(request, 'bcsim/block_list.html', {'blocks': blocks, 'blockchain': blockchain})
+        return render(request, 'bcsim/block_list.html',
+                      {'blocks': blocks, 'blockchain': blockchain})
