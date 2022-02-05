@@ -7,8 +7,8 @@ from django.contrib import messages
 from django.http import HttpResponse
 
 from .models import Blockchain, Block, Miner, Token, Transaction
-from .forms import (BlockchainForm, JoinForm, BlockForm, 
-    LoginForm, TokenPriceForm)
+from .forms import (BlockchainForm, JoinForm, BlockForm,
+                    LoginForm, TokenPriceForm)
 from .decorators import require_miner_id_is_in_session
 
 
@@ -74,19 +74,21 @@ def market_view(request):
             token.save()
             return redirect(reverse('bcsim:market'))
 
-    tokens = Token.objects.filter(blockchain=miner.blockchain).order_by('-price')
+    tokens = Token.objects.filter(
+        blockchain=miner.blockchain).order_by('-price')
 
 #        tokens_for_sale = tokens.exclude(owner=miner).filter(price__isnull=False)
 
     context = {
         'tokens': tokens,
-#           'tokens_for_sale': tokens_for_sale,
+        #           'tokens_for_sale': tokens_for_sale,
         'miner': miner,
         'blockchain': miner.blockchain,
         'form': token_price_form
     }
 
     return render(request, 'bcsim/market.html', context)
+
 
 @require_GET
 @require_miner_id_is_in_session
@@ -103,11 +105,13 @@ def invite_view(request):
 def participants_view(request):
     miner_id = request.session['miner_id']
     miner = get_object_or_404(Miner, pk=miner_id)
-    miners = Miner.objects.filter(blockchain=miner.blockchain).order_by('-balance')
-    context = {'miners': miners, 'blockchain': miner.blockchain, 'client': miner}
+    miners = Miner.objects.filter(
+        blockchain=miner.blockchain).order_by('-balance')
+    context = {'miners': miners,
+               'blockchain': miner.blockchain, 'client': miner}
     return render(request, 'bcsim/participants.html', context)
 
-    
+
 @require_GET
 @require_miner_id_is_in_session
 def logout_view(request):
@@ -116,8 +120,8 @@ def logout_view(request):
     miner_id = request.session['miner_id']
 
     # delete all session variables
-    all_session_vars = ['miner_id', 'blockchain_id'] 
-    del_session_vars(all_session_vars,request) 
+    all_session_vars = ['miner_id', 'blockchain_id']
+    del_session_vars(all_session_vars, request)
 
     messages.info(
         request, f"Du forlod blockchainen med ID={blockchain_id}. Dit minearbejder-ID var {miner_id}.")
@@ -145,7 +149,7 @@ def home_view(request):
     if request.method == "POST":
 
         if 'join_bc' in request.POST:
-            
+
             expand = 'second'
 
             join_form = JoinForm(request.POST)
@@ -157,7 +161,8 @@ def home_view(request):
                 )
                 new_miner = join_form.save(commit=False)
                 new_miner.blockchain = blockchain
-                new_miner.miner_num = Miner.objects.filter(blockchain=blockchain).count()
+                new_miner.miner_num = Miner.objects.filter(
+                    blockchain=blockchain).count()
                 new_miner.save()
 
                 # Create initial transactions for miner
@@ -173,7 +178,6 @@ def home_view(request):
 
                 # redirect to mining page
                 return redirect(reverse('bcsim:mine'))
-            
 
         elif 'create_bc' in request.POST:
             expand = 'first'
@@ -186,7 +190,8 @@ def home_view(request):
                 new_blockchain = create_form.save()
 
                 # create miner
-                creator = Miner.objects.create(name=create_form.cleaned_data['creator_name'], blockchain=new_blockchain, miner_num=0, is_creator=True)
+                creator = Miner.objects.create(
+                    name=create_form.cleaned_data['creator_name'], blockchain=new_blockchain, miner_num=0, is_creator=True)
                 request.session['miner_id'] = creator.id
                 request.session['blockchain_id'] = new_blockchain.id
 
@@ -194,12 +199,12 @@ def home_view(request):
                 Block.objects.create(
                     block_num=0,
                     blockchain=new_blockchain,
-                    miner = creator,
+                    miner=creator,
                     nonce="0",
                     prev_hash="0"
                 )
                 messages.success(request, f"Du har startet en ny blockchain!")
- 
+
                 # Create initial transactions for creator
                 if new_blockchain.has_tokens():
                     Transaction.create_initial_transaction(creator)
@@ -207,7 +212,7 @@ def home_view(request):
 
                 # redirect to mining page
                 return redirect(reverse('bcsim:mine'))
-        
+
         elif 'login' in request.POST:
             expand = 'third'
 
@@ -229,7 +234,6 @@ def home_view(request):
 
                 # redirect to mining page
                 return redirect(reverse('bcsim:mine'))
-    
 
     context = {
         'create_form': create_form,
@@ -245,12 +249,13 @@ def home_view(request):
     context['expand'] = expand
 
     if 'miner_id' in request.GET:
-       context['expand'] = 'third'
+        context['expand'] = 'third'
 
     elif 'blockchain_id' in request.GET:
-       context['expand'] = 'second'
+        context['expand'] = 'second'
 
     return render(request, 'bcsim/home.html', context)
+
 
 @require_POST
 @require_miner_id_is_in_session
@@ -268,22 +273,22 @@ def toggle_pause_view(request):
 @require_miner_id_is_in_session
 def mine_view(request):
     miner_id = request.session['miner_id']
-    miner = get_object_or_404(Miner, pk=miner_id) 
+    miner = get_object_or_404(Miner, pk=miner_id)
 
     blockchain = miner.blockchain
     blocks = Block.objects.filter(
         blockchain=blockchain).order_by('-block_num')
-    last_block = blocks.first()        
+    last_block = blocks.first()
     current_block_num = len(blocks)
     form = BlockForm()
     hash = None
 
     if blockchain.has_tokens():
         unprocessed_transactions = Transaction.objects.filter(
-                blockchain=blockchain, processed=False)
+            blockchain=blockchain, processed=False)
         if unprocessed_transactions.count() == 0:
             next_transaction = None
-        else: 
+        else:
             next_transaction = unprocessed_transactions.first()
     else:
         unprocessed_transactions = None
@@ -298,12 +303,11 @@ def mine_view(request):
         transaction=next_transaction
     )
 
-
     if request.method == "POST":
-        
+
         if blockchain.is_paused:
             return redirect(reverse('bcsim:mine'))
-        
+
         if blockchain.has_tokens():
             if next_transaction is None:
                 messages.error(
@@ -312,7 +316,7 @@ def mine_view(request):
 
         form = BlockForm(request.POST)
 
-        if form.is_valid():                     
+        if form.is_valid():
             if miner.missed_last_block():
                 messages.error(
                     request, f"En anden minearbejder tilføjede blok #{miner.number_of_last_block_seen} før dig!")
@@ -325,29 +329,30 @@ def mine_view(request):
             hash, hash_is_valid = potential_next_block.hash_is_valid()
 
             if 'add_to_chain' in request.POST:
-                
+
                 # We want miners to check hashes before trying to add blocks to chain.
                 # Therefore we make a little time delay here
                 time_delay_in_seconds = 2
                 time.sleep(time_delay_in_seconds)
-                
-                if not hash_is_valid:    
+
+                if not hash_is_valid:
                     messages.error(
                         request, f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
-                else: 
+                else:
                     if not blockchain.has_tokens():
                         potential_next_block.save()
                         miner.add_miner_reward()
                         messages.success(
                             request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
 
-                    if blockchain.has_tokens():                                
-                        transaction_is_valid, error_message = next_transaction.process(miner)
+                    if blockchain.has_tokens():
+                        transaction_is_valid, error_message = next_transaction.process(
+                            miner)
                         if transaction_is_valid:
                             unprocessed_transactions = Transaction.objects.filter(
                                 blockchain=blockchain, processed=False)
                             potential_next_block.save()
-        
+
                             messages.success(
                                 request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
                         else:
@@ -357,34 +362,32 @@ def mine_view(request):
 
                     return redirect(reverse('bcsim:mine'))
 
-
     context = {
         'blocks': blocks,
         'blockchain': blockchain,
         'miner': miner,
-        'form':form,
+        'form': form,
         'cur_hash': hash,
         'next_block': potential_next_block,
         'unprocessed_transactions': unprocessed_transactions
     }
-    
+
     if miner.number_of_last_block_seen < current_block_num:
         miner.number_of_last_block_seen = current_block_num
         miner.save()
 
-    
     return render(request, 'bcsim/mine.html', context)
 
 
 @require_GET
 def block_list_view_htmx(request):
-    
+
     try:
         blockchain_id = request.session['blockchain_id']
         blockchain = Blockchain.objects.get(pk=blockchain_id)
     except:
         return HttpResponse("Error: Client does not belong to blockchain")
-    else: 
+    else:
         blocks = Block.objects.filter(
-                blockchain=blockchain).order_by('-block_num')
+            blockchain=blockchain).order_by('-block_num')
         return render(request, 'bcsim/block_list.html', {'blocks': blocks, 'blockchain': blockchain})

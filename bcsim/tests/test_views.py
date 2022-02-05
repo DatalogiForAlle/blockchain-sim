@@ -16,7 +16,6 @@ from pytest_django.asserts import assertTemplateUsed, assertContains, assertNotC
 from datetime import datetime
 
 
-
 def test_participants_view(db, client):
     """
     Participants view exists at correct url and uses correct template.
@@ -27,9 +26,8 @@ def test_participants_view(db, client):
     session['miner_id'] = miner.id
     session.save()
 
-
     response = client.get(reverse('bcsim:participants'))
-    
+
     assert response.status_code == 200
     assertTemplateUsed(response, 'bcsim/participants.html')
 
@@ -160,7 +158,7 @@ def test_home_view_post_request_create_submit_invalid_no_provided_title(db, clie
     # no session data is createad
     assert 'miner_id' not in client.session
     assert 'blockchain_id' not in client.session
- 
+
     # client should be returned to home page
     assert response.status_code == 200
     assertTemplateUsed(response, 'bcsim/home.html')

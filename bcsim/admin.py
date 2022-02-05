@@ -1,6 +1,7 @@
 from django.contrib import admin
 from .models import Blockchain, Block, Miner, Token, Transaction
 
+
 class BlockchainAdmin(admin.ModelAdmin):
     list_display = (
         'id',
@@ -46,7 +47,6 @@ class TransactionAdmin(admin.ModelAdmin):
         'processed',
         'amount'
     )
-
 
 
 admin.site.register(Blockchain, BlockchainAdmin)

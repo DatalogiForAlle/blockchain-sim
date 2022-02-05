@@ -11,4 +11,3 @@ def require_miner_id_is_in_session(func):
             return redirect(reverse('bcsim:home'))
         return func(request, *args, **kwargs)
     return wrapper_login_required
-

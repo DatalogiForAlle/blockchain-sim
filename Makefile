@@ -45,6 +45,12 @@ test_views: ## Execute tests within the docker image
 	DJANGO_SETTINGS_MODULE=config.settings docker-compose -f docker-compose.dev.yml run web pytest bcsim/tests/test_views.py
 
 
+# ---------- Codestyle  ---------- #
+tidy_bcsim: # Reformat source code to make it adhere to PEP8
+	pipenv run autopep8 --in-place --recursive --exclude=migrations,animal_avatar bcsim
+
+style_check: # Check PEP8
+	pipenv run pycodestyle bcsim/views.py
 
 # ---------- Production ---------- #
 production_stop: ## Stop production server

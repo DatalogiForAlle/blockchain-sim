@@ -32,8 +32,9 @@ def test_blockchain_model_id_creation(db):
 
 
 def test_blockchain_model_easy_hash_is_valid_method(db):
-    bc = Blockchain.objects.create(title='bc title', difficulty=Blockchain.Level.EASY)
-    assert bc.hash_is_valid("0werger9") 
+    bc = Blockchain.objects.create(
+        title='bc title', difficulty=Blockchain.Level.EASY)
+    assert bc.hash_is_valid("0werger9")
     assert bc.hash_is_valid("13erger9")
     assert not bc.hash_is_valid("20werger9")
 
