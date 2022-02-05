@@ -1,14 +1,15 @@
+import time
 
-import random
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
+from django.http import HttpResponse
+
 from .models import Blockchain, Block, Miner, Token, Transaction
-from .forms import BlockchainForm, JoinForm, BlockForm, LoginForm, TokenPriceForm
-from django.contrib import messages
-import time
-from .animal_avatar.animal_avatar import Avatar
+from .forms import (BlockchainForm, JoinForm, BlockForm, 
+    LoginForm, TokenPriceForm)
+from .decorators import require_miner_id_is_in_session
 
 
 def del_session_vars(session_vars, request):
@@ -18,102 +19,97 @@ def del_session_vars(session_vars, request):
 
 
 @require_POST
+@require_miner_id_is_in_session
 def buy_token_view(request):
-    try:
-        miner = Miner.objects.get(id=request.session['miner_id'])
-    except:
+
+    miner_id = request.session['miner_id']
+    miner = get_object_or_404(Miner, pk=miner_id)
+
+    token_id = int(request.POST['token_id'])
+    token = get_object_or_404(
+        Token, pk=token_id)
+
+    if not token.is_for_sale():
         return redirect(reverse('bcsim:home'))
-    else:
+
+    seller_id = request.POST['seller_id']
+    seller = get_object_or_404(Miner, pk=seller_id)
+
+    Transaction.objects.create(
+        blockchain=miner.blockchain,
+        buyer=miner,
+        seller=seller,
+        token=token,
+        amount=token.price,
+        processed=False)
+
+    token.trade_in_process = True
+    token.save()
+
+    return redirect(reverse('bcsim:market'))
+
+
+@require_miner_id_is_in_session
+def market_view(request):
+    miner_id = request.session['miner_id']
+    miner = get_object_or_404(Miner, pk=miner_id)
+
+    token_price_form = TokenPriceForm()
+
+    if request.method == 'POST':
+        token_price_form = TokenPriceForm(request.POST)
         token_id = int(request.POST['token_id'])
         token = get_object_or_404(
             Token, pk=token_id)
-
-        if not token.is_for_sale():
-            return redirect(reverse('bcsim:home'))
-
-        seller_id = request.POST['seller_id']
-        seller = get_object_or_404(Miner, pk=seller_id)
-
-        Transaction.objects.create(
-            blockchain=miner.blockchain,
-            buyer=miner,
-            seller=seller,
-            token=token,
-            amount=token.price,
-            processed=False)
-
-        token.trade_in_process = True
-        token.save()
-
-        return redirect(reverse('bcsim:market'))
-
-def market_view(request):
-    
-    try:
-        miner = Miner.objects.get(id=request.session['miner_id'])
-    except:
-        return redirect(reverse('bcsim:home'))  
-    else:
-        token_price_form = TokenPriceForm()
-
-        if request.method == 'POST':
-            token_price_form = TokenPriceForm(request.POST)
-            token_id = int(request.POST['token_id'])
-            token = get_object_or_404(
-                Token, pk=token_id)
-            if token_price_form.is_valid():
-                if token.price:
-                    # Price is already set, so we redirect
-                    return redirect(reverse('bcsim:market'))
-                elif token.owner != miner: 
-                    # Only the owner of a token should be able to set the price
-                    return redirect(reverse('bcsim:market'))
-
-                token_price = token_price_form.cleaned_data['price']
-                token.price = token_price
-                token.save()
+        if token_price_form.is_valid():
+            if token.price:
+                # Price is already set, so we redirect
                 return redirect(reverse('bcsim:market'))
-            
-        tokens = Token.objects.filter(blockchain=miner.blockchain).order_by('-price')
-        
+            elif token.owner != miner:
+                # Only the owner of a token should be able to set the price
+                return redirect(reverse('bcsim:market'))
+
+            token_price = token_price_form.cleaned_data['price']
+            token.price = token_price
+            token.save()
+            return redirect(reverse('bcsim:market'))
+
+    tokens = Token.objects.filter(blockchain=miner.blockchain).order_by('-price')
+
 #        tokens_for_sale = tokens.exclude(owner=miner).filter(price__isnull=False)
 
-        context = {
-            'tokens': tokens,
- #           'tokens_for_sale': tokens_for_sale,
-            'miner': miner,
-            'blockchain': miner.blockchain,
-            'form': token_price_form
-        }
+    context = {
+        'tokens': tokens,
+#           'tokens_for_sale': tokens_for_sale,
+        'miner': miner,
+        'blockchain': miner.blockchain,
+        'form': token_price_form
+    }
 
-        return render(request, 'bcsim/market.html', context)
+    return render(request, 'bcsim/market.html', context)
 
 @require_GET
+@require_miner_id_is_in_session
 def invite_view(request):
-    try:
-        miner = Miner.objects.get(id=request.session['miner_id'])
-    except:
-        # if client does not have a session, return to home:
-        return redirect(reverse('bcsim:home'))
-    else:
-        context = {'blockchain': miner.blockchain, 'miner': miner}
-        return render(request, 'bcsim/invite.html', context)
+    miner_id = request.session['miner_id']
+    miner = get_object_or_404(Miner, pk=miner_id)
+
+    context = {'blockchain': miner.blockchain, 'miner': miner}
+    return render(request, 'bcsim/invite.html', context)
 
 
 @require_GET
+@require_miner_id_is_in_session
 def participants_view(request):
-    try:
-        miner = Miner.objects.get(id=request.session['miner_id'])
-    except:
-        # if client does not have a session, return to home:
-        return redirect(reverse('bcsim:home'))
-    else:
-        miners = Miner.objects.filter(blockchain=miner.blockchain).order_by('-balance')
-        context = {'miners': miners, 'blockchain': miner.blockchain, 'client':miner}
-        return render(request, 'bcsim/participants.html', context)
+    miner_id = request.session['miner_id']
+    miner = get_object_or_404(Miner, pk=miner_id)
+    miners = Miner.objects.filter(blockchain=miner.blockchain).order_by('-balance')
+    context = {'miners': miners, 'blockchain': miner.blockchain, 'client': miner}
+    return render(request, 'bcsim/participants.html', context)
 
     
 @require_GET
+@require_miner_id_is_in_session
 def logout_view(request):
     """ Destroy session variables, and return to home view """
     blockchain_id = request.session['blockchain_id']
@@ -257,11 +253,10 @@ def home_view(request):
     return render(request, 'bcsim/home.html', context)
 
 @require_POST
+@require_miner_id_is_in_session
 def toggle_pause_view(request):
-    try:
-        miner = Miner.objects.get(id=request.session['miner_id'])
-    except:
-        return redirect(reverse('bcsim:home'))
+    miner_id = request.session['miner_id']
+    miner = get_object_or_404(Miner, pk=miner_id)
 
     if not miner.is_creator:
         return redirect(reverse('bcsim:home'))
@@ -270,132 +265,126 @@ def toggle_pause_view(request):
     return redirect(reverse('bcsim:mine'))
 
 
+@require_miner_id_is_in_session
 def mine_view(request):
-    
-    try:
-        miner = Miner.objects.get(id=request.session['miner_id'])
-    except:
-        return redirect(reverse('bcsim:home'))
-    else:
-        blockchain = miner.blockchain
-        blocks = Block.objects.filter(
-            blockchain=blockchain).order_by('-block_num')
-        last_block = blocks.first()        
-        current_block_num = len(blocks)
-        form = BlockForm()
-        hash = None
+    miner_id = request.session['miner_id']
+    miner = get_object_or_404(Miner, pk=miner_id) 
 
-        if blockchain.has_tokens():
-            unprocessed_transactions = Transaction.objects.filter(
-                    blockchain=blockchain, processed=False)
-            if unprocessed_transactions.count() == 0:
-                next_transaction = None
-            else: 
-                next_transaction = unprocessed_transactions.first()
-        else:
-            unprocessed_transactions = None
+    blockchain = miner.blockchain
+    blocks = Block.objects.filter(
+        blockchain=blockchain).order_by('-block_num')
+    last_block = blocks.first()        
+    current_block_num = len(blocks)
+    form = BlockForm()
+    hash = None
+
+    if blockchain.has_tokens():
+        unprocessed_transactions = Transaction.objects.filter(
+                blockchain=blockchain, processed=False)
+        if unprocessed_transactions.count() == 0:
             next_transaction = None
+        else: 
+            next_transaction = unprocessed_transactions.first()
+    else:
+        unprocessed_transactions = None
+        next_transaction = None
 
-        potential_next_block = Block(
-            block_num=current_block_num,
-            blockchain=blockchain,
-            miner=miner,
-            prev_hash=last_block.hash(),
-            nonce=None,
-            transaction=next_transaction
-        )
+    potential_next_block = Block(
+        block_num=current_block_num,
+        blockchain=blockchain,
+        miner=miner,
+        prev_hash=last_block.hash(),
+        nonce=None,
+        transaction=next_transaction
+    )
 
 
-        if request.method == "POST":
-            
-            if blockchain.is_paused:
+    if request.method == "POST":
+        
+        if blockchain.is_paused:
+            return redirect(reverse('bcsim:mine'))
+        
+        if blockchain.has_tokens():
+            if next_transaction is None:
+                messages.error(
+                    request, f"Der er ingen transaktioner at mine!")
                 return redirect(reverse('bcsim:mine'))
-            
-            if blockchain.has_tokens():
-                if next_transaction is None:
+
+        form = BlockForm(request.POST)
+
+        if form.is_valid():                     
+            if miner.missed_last_block():
+                messages.error(
+                    request, f"En anden minearbejder tilføjede blok #{miner.number_of_last_block_seen} før dig!")
+                return redirect(reverse('bcsim:mine'))
+
+            nonce = form.cleaned_data['nonce']
+
+            potential_next_block.nonce = nonce
+
+            hash, hash_is_valid = potential_next_block.hash_is_valid()
+
+            if 'add_to_chain' in request.POST:
+                
+                # We want miners to check hashes before trying to add blocks to chain.
+                # Therefore we make a little time delay here
+                time_delay_in_seconds = 2
+                time.sleep(time_delay_in_seconds)
+                
+                if not hash_is_valid:    
                     messages.error(
-                        request, f"Der er ingen transaktioner at mine!")
-                    return redirect(reverse('bcsim:mine'))
+                        request, f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
+                else: 
+                    if not blockchain.has_tokens():
+                        potential_next_block.save()
+                        miner.add_miner_reward()
+                        messages.success(
+                            request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
 
-            form = BlockForm(request.POST)
-
-            if form.is_valid():                     
-                if miner.missed_last_block():
-                    messages.error(
-                        request, f"En anden minearbejder tilføjede blok #{miner.number_of_last_block_seen} før dig!")
-                    return redirect(reverse('bcsim:mine'))
-
-                nonce = form.cleaned_data['nonce']
-
-                potential_next_block.nonce = nonce
-
-                hash, hash_is_valid = potential_next_block.hash_is_valid()
-
-                if 'add_to_chain' in request.POST:
-                    
-                    # We want miners to check hashes before trying to add blocks to chain.
-                    # Therefore we make a little time delay here
-                    time_delay_in_seconds = 2
-                    time.sleep(time_delay_in_seconds)
-                    
-                    if not hash_is_valid:    
-                        messages.error(
-                            request, f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
-                    else: 
-                        if not blockchain.has_tokens():
+                    if blockchain.has_tokens():                                
+                        transaction_is_valid, error_message = next_transaction.process(miner)
+                        if transaction_is_valid:
+                            unprocessed_transactions = Transaction.objects.filter(
+                                blockchain=blockchain, processed=False)
                             potential_next_block.save()
-                            miner.add_miner_reward()
+        
                             messages.success(
                                 request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
+                        else:
+                            messages.info(
+                                request, f"Transaktionen er ugyldig!: {error_message}"
+                            )
 
-                        if blockchain.has_tokens():                                
-                            transaction_is_valid, error_message = next_transaction.process(miner)
-                            if transaction_is_valid:
-                                unprocessed_transactions = Transaction.objects.filter(
-                                    blockchain=blockchain, processed=False)
-                                potential_next_block.save()
-            
-                                messages.success(
-                                    request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
-                            else:
-                                messages.info(
-                                    request, f"Transaktionen er ugyldig!: {error_message}"
-                                )
-
-                        return redirect(reverse('bcsim:mine'))
+                    return redirect(reverse('bcsim:mine'))
 
 
-        context = {
-            'blocks': blocks,
-            'blockchain': blockchain,
-            'miner': miner,
-            'form':form,
-            'cur_hash': hash,
-            'next_block': potential_next_block,
-            'unprocessed_transactions': unprocessed_transactions
-        }
-        
-        if miner.number_of_last_block_seen < current_block_num:
-            miner.number_of_last_block_seen = current_block_num
-            miner.save()
+    context = {
+        'blocks': blocks,
+        'blockchain': blockchain,
+        'miner': miner,
+        'form':form,
+        'cur_hash': hash,
+        'next_block': potential_next_block,
+        'unprocessed_transactions': unprocessed_transactions
+    }
+    
+    if miner.number_of_last_block_seen < current_block_num:
+        miner.number_of_last_block_seen = current_block_num
+        miner.save()
 
-        
-        return render(request, 'bcsim/mine.html', context)
+    
+    return render(request, 'bcsim/mine.html', context)
 
 
 @require_GET
 def block_list_view_htmx(request):
-    if not 'blockchain_id' in request.session:
-        return redirect(reverse('bcsim:home'))
-
-    blockchain_id = request.session['blockchain_id']
-
-    if not Blockchain.objects.filter(id=blockchain_id).exists():
-        return redirect(reverse('bcsim:logout'))
-    else:
-        blockchain = Blockchain.objects.get(id=blockchain_id)
-
-    blocks = Block.objects.filter(
-        blockchain=blockchain).order_by('-block_num')
-
-    return render(request, 'bcsim/block_list.html', {'blocks': blocks, 'blockchain': blockchain})
+    
+    try:
+        blockchain_id = request.session['blockchain_id']
+        blockchain = Blockchain.objects.get(pk=blockchain_id)
+    except:
+        return HttpResponse("Error: Client does not belong to blockchain")
+    else: 
+        blocks = Block.objects.filter(
+                blockchain=blockchain).order_by('-block_num')
+        return render(request, 'bcsim/block_list.html', {'blocks': blocks, 'blockchain': blockchain})
