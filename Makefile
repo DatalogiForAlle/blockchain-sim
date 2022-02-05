@@ -44,16 +44,6 @@ test_forms: ## Execute tests within the docker image
 test_views: ## Execute tests within the docker image
 	DJANGO_SETTINGS_MODULE=config.settings docker-compose -f docker-compose.dev.yml run web pytest bcsim/tests/test_views.py
 
-flake8: ## PEP8 codestyle check
-	flake8 --exclude bcsim/migrations --extend-exclude accounts/migrations
-
-# This target runs both PEP8 checks and test suite
-check: flake8 test
-
-tidy:   ## Reformat source files to adhere to PEP8 
-	black -79 . --exclude=bcsim/migrations --extend-exclude=accounts/migrations
-
-
 
 
 # ---------- Production ---------- #

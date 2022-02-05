@@ -9,10 +9,9 @@ gunicorn = "*"
 Django = "~=3.2"
 factory-boy = "*"
 pycodestyle = "*"
+autopep8 = "*"
 
 [dev-packages]
-black = "*"
-flake8 = "*"
 pytest = "*"
 pytest-django = "*"
 django-extensions = "*"
