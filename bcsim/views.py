@@ -44,7 +44,7 @@ def buy_token_view(request):
         processed=False)
 
     token.trade_in_process = True
-    token.save()
+    token.save() 
 
     return redirect(reverse('bcsim:market'))
 
@@ -190,7 +190,7 @@ def home_view(request):
                 # create new blockchain
                 new_blockchain = create_form.save()
 
-                # create miner
+                # create creator (miner)
                 creator = Miner.objects.create(
                     name=create_form.cleaned_data['creator_name'],
                     blockchain=new_blockchain,
@@ -199,6 +199,18 @@ def home_view(request):
                 request.session['miner_id'] = creator.id
                 request.session['blockchain_id'] = new_blockchain.id
 
+                if new_blockchain.has_tokens():
+                    # create NTF-bank (miner)
+                    nft_bank = Miner.objects.create(
+                        name='NFT-bank',
+                        blockchain=new_blockchain,
+                        miner_num=Miner.objects.filter(
+                            blockchain=new_blockchain).count(),
+                        is_creator=False)
+
+                    # Add initial tokens to NFT-bank
+                    new_blockchain.add_token_to_bank(number=5)
+  
                 # create initial block in chain
                 Block.objects.create(
                     block_num=0,
