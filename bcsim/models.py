@@ -250,26 +250,29 @@ class Transaction(models.Model):
             if self.is_miner_to_miner_transaction():
                 self.token.trade_in_process = False
                 self.token.price = None
+                self.token.owner = self.buyer
                 self.token.save()
 
-                miner.refresh_from_db()
-                miner.add_miner_reward()
+                self.buyer.balance -= self.amount
+                self.seller.balance += self.amount
+
+                self.buyer.save()
+                self.seller.save()
 
             elif self.is_initial_transaction():
                 self.token.owner = self.buyer
                 self.token.save()
 
+            miner.refresh_from_db()
+            miner.add_miner_reward()
+
+
         else:
+            # Transaction is not valid
             if self.is_miner_to_miner_transaction():
 
-                self.buyer.balance -= self.amount
-                self.seller.balance += self.amount
-                self.token.owner = self.buyer
                 self.token.trade_in_process = False
                 self.token.price = None
-
-                self.buyer.save()
-                self.seller.save()
                 self.token.save()
 
             elif self.is_payment_to_bank_for_token():
@@ -381,7 +384,7 @@ class Block(models.Model):
         if self.block_num == 0:
             return 'Genesis'
 
-        first_names = ('John', 'Andy', 'Joe', 'Sandy', 'Sally',
+        first_names = ('John', 'Andy', 'Joe', 'Sandy', 'Sally', 
                        'Alice', 'Joanna', 'Serena', 'Oliver', 'Steven')
 
         last_names = ('Johnson', 'Smith', 'Williams', 'Brown',
