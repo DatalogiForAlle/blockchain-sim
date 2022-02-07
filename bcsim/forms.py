@@ -130,9 +130,9 @@ class TokenPriceForm(forms.Form):
     def clean_price(self):
         max_price = 10**6
         price = self.cleaned_data['price']
-        if price < 0:
+        if price < 1:
             raise forms.ValidationError(
-                'Prisen kan ikke være negativ.')
+                'Prisen skal være mindst 1.')
         elif price > max_price:
             raise forms.ValidationError(
                 f'Prisen kan ikke være større end {max_price}')

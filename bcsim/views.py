@@ -29,8 +29,22 @@ def buy_token_view(request):
     token = get_object_or_404(
         Token, pk=token_id)
 
-    if not token.is_for_sale():
-        return redirect(reverse('bcsim:home'))
+    if miner.has_trade_in_process_as_buyer():
+        mgs = (
+            f"Du har allerede et køb i køen."
+        )
+        messages.info(request, mgs)
+
+        return redirect(reverse('bcsim:market'))
+
+
+    if not miner.can_buy_token(token):
+        mgs = (
+            f"Du kan ikke købe dette token"
+        )
+        messages.info(request, mgs)
+
+        return redirect(reverse('bcsim:market'))
 
     seller_id = request.POST['seller_id']
     seller = get_object_or_404(Miner, pk=seller_id)
@@ -42,8 +56,11 @@ def buy_token_view(request):
         token=token,
         amount=token.price,
         processed=False)
+    
+    if seller == miner.blockchain.get_bank():
+        miner.blockchain.add_token_to_bank()
 
-    token.trade_in_process = True
+    token.transaction_in_process = True
     token.save() 
 
     return redirect(reverse('bcsim:market'))
@@ -103,7 +120,8 @@ def participants_view(request):
     miner_id = request.session['miner_id']
     miner = get_object_or_404(Miner, pk=miner_id)
     miners = Miner.objects.filter(
-        blockchain=miner.blockchain).order_by('-balance')
+        blockchain=miner.blockchain)
+    
     context = {'miners': miners,
                'blockchain': miner.blockchain, 'client': miner}
     return render(request, 'bcsim/participants.html', context)
@@ -161,14 +179,11 @@ def home_view(request):
                 )
                 new_miner = join_form.save(commit=False)
                 new_miner.blockchain = blockchain
-                new_miner.miner_num = Miner.objects.filter(
-                    blockchain=blockchain).count()
                 new_miner.save()
 
                 # Create initial transactions for miner
                 if blockchain.has_tokens():
-                    Transaction.create_initial_transaction(new_miner)
-                    Transaction.create_initial_transaction(new_miner)
+                    blockchain.create_initial_transactions(new_miner)
 
                 # Set session variables for client
                 request.session['miner_id'] = new_miner.id
@@ -194,7 +209,6 @@ def home_view(request):
                 creator = Miner.objects.create(
                     name=create_form.cleaned_data['creator_name'],
                     blockchain=new_blockchain,
-                    miner_num=0,
                     is_creator=True)
                 request.session['miner_id'] = creator.id
                 request.session['blockchain_id'] = new_blockchain.id
@@ -209,7 +223,7 @@ def home_view(request):
                         is_creator=False)
 
                     # Add initial tokens to NFT-bank
-                    new_blockchain.add_token_to_bank(number=5)
+                    new_blockchain.add_token_to_bank(number_of_tokens_to_add=Blockchain.NUM_TOKENS_FOR_SALE_IN_BANK)
   
                 # create initial block in chain
                 Block.objects.create(
@@ -223,9 +237,8 @@ def home_view(request):
 
                 # Create initial transactions for creator
                 if new_blockchain.has_tokens():
-                    Transaction.create_initial_transaction(creator)
-                    Transaction.create_initial_transaction(creator)
-
+                    new_blockchain.create_initial_transactions(creator)
+ 
                 # redirect to mining page
                 return redirect(reverse('bcsim:mine'))
 

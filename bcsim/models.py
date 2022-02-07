@@ -23,8 +23,12 @@ class Blockchain(models.Model):
     title = models.CharField(max_length=50, default="Transaktioner")
     created_at = models.DateTimeField(auto_now_add=True)
     is_paused = models.BooleanField(default=False)
-    miner_reward = 100
-    bank_token_price = 150
+    
+    # Class constans 
+    MINER_REWARD = 100
+    BANK_TOKEN_PRICE = 150
+    NUM_INITIAL_TRANSACTIONS_PR_MINER = 2
+    NUM_TOKENS_FOR_SALE_IN_BANK = 3
 
     class Type(models.IntegerChoices):
         HAS_NO_TOKENS = 1, ('Uden token-marked')
@@ -45,13 +49,40 @@ class Blockchain(models.Model):
         default=Level.MEDIUM
     )
 
-    def add_token_to_bank(self, number=1):
-        for _ in range(number):
+    def _create_initial_transaction(self, miner):
+        """ Create 1 initial transaction for new miner """
+        nft_bank = self.get_bank()
+
+        token = Token.objects.create(
+            blockchain=self,
+            owner=nft_bank,
+            price=None,
+            transaction_in_process=True,
+        )
+
+        Transaction.objects.create(
+            buyer=miner,
+            seller=nft_bank,
+            token=token,
+            blockchain=self,
+            processed=False,
+            amount=0
+        )
+
+
+    def create_initial_transactions(self, miner):
+        """ Create initial transactions for new miner """
+        for _ in range(Blockchain.NUM_INITIAL_TRANSACTIONS_PR_MINER):
+            self._create_initial_transaction(miner)
+    
+    
+    def add_token_to_bank(self, number_of_tokens_to_add=1):
+        for _ in range(number_of_tokens_to_add):
             Token.objects.create(
                 blockchain=self,
                 owner=self.get_bank(),
-                price=Blockchain.bank_token_price,
-                trade_in_process = False
+                price=Blockchain.BANK_TOKEN_PRICE,
+                transaction_in_process = False
             )
 
     def get_bank(self):
@@ -125,6 +156,8 @@ class Miner(models.Model):
         if not self.id:
             # we are creating a new miner (not updating an existing miner)
             self.id = new_unique_miner_id()
+            self.miner_num = Miner.objects.filter(
+                blockchain=self.blockchain).count()
         super(Miner, self).save(*args, **kwargs)
 
     def num_mined_blocks(self):
@@ -134,7 +167,7 @@ class Miner(models.Model):
         return num_mined_blocks
 
     def add_miner_reward(self):
-        self.balance += self.blockchain.miner_reward
+        self.balance += self.blockchain.MINER_REWARD
         self.save()
 
     def missed_last_block(self):
@@ -146,7 +179,7 @@ class Miner(models.Model):
         return Token.objects.filter(owner=self)
 
     def can_buy_token(self, token):
-        if token.trade_in_process:
+        if token.transaction_in_process:
             return False
         if token.owner == self:
             return False
@@ -160,7 +193,7 @@ class Miner(models.Model):
         """
         Get the unique color identifying the miner in question. 
 
-        The first 38 miners who join a blockchain will get a color from from this list collection of nice colors
+        The first 37 miners who join a blockchain will get a color from from this list collection of nice colors
         https: // davidpiesse.github.io/tailwind-md-colours /
         (more colors can be added from the list if needed)
 
@@ -169,8 +202,8 @@ class Miner(models.Model):
         NICE_COLORS = [
             "#b3e5fc", "#dcedc8", "#ffcdd2", "#ff8a80", "#ff80ab", "#ea80fc", "#b388ff", "#42a5f5", "#03a9f4", "#26c6da",
             "#26a69a", "#8bc34a", "#dce775", "#ffee58", "#ffca28", "#ffa726", "#ff7043", "#c5cae9", "#b2dfdb", "#a7ffeb",
-            "#fff9c4", "#f8bbd0", "#bbdefb", "#c8e6c9", "#ffecb3", "#e1bee7", "#69f0ae", "#ffe0b2", "#ffd180", "#cfd8dc",
-            "#d1c4e9", "#b2ebf2", "#84ffff", "#f0f4c3", "#f4ff81", "#ffccbc",  "#ff9e80", "#b2ff59", ]
+            "#fff9c4", "#f8bbd0", "#bbdefb", "#c8e6c9", "#ffecb3", "#e1bee7", "#69f0ae", "#ffe0b2", "#ffd180", "#d1c4e9", 
+            "#b2ebf2", "#84ffff", "#f0f4c3", "#f4ff81", "#ffccbc",  "#ff9e80", "#b2ff59", ]
 
         # We want a random ordering of the colors
         random.seed(self.blockchain.id)
@@ -185,7 +218,17 @@ class Miner(models.Model):
             blue = (0 + int((i/2)*100)) % 255
             color = f"rgb({red},{green},{blue}, 0.3)"
         return color
-
+    
+    def has_trade_in_process_as_buyer(self):
+        transactions_in_process = Transaction.objects.filter(
+            processed=False, buyer=self, amount__gt=1)
+        
+        for t in transactions_in_process:
+            print(t.amount)
+        if transactions_in_process.exists():
+            return True
+        else: 
+            return False
 
 def create_random_avatar_seed():
     """ Create random seed for Tokens """
@@ -203,7 +246,7 @@ class Token(models.Model):
         Miner, null=True, blank=True, on_delete=models.CASCADE)
     seed = models.CharField(max_length=10)
     price = models.IntegerField(null=True, blank=True)
-    trade_in_process = models.BooleanField(default=False)
+    transaction_in_process = models.BooleanField(default=True)
     
     def save(self, *args, **kwargs):
         if not self.id:
@@ -212,7 +255,7 @@ class Token(models.Model):
         super(Token, self).save(*args, **kwargs)
 
     def is_for_sale(self):
-        return (self.price is not None) and (not self.trade_in_process)
+        return (self.price is not None) and (self.price > 0) and (not self.transaction_in_process)
 
     def big_svg(self):
         avatar = Avatar(self.seed, size=160)
@@ -224,19 +267,25 @@ class Token(models.Model):
         svg = avatar.create_avatar()
         return svg
 
+    def in_queue_for_initial_transaction(self):
+        owned_by_bank = (self.owner == self.blockchain.get_bank())
+        price_is_none = (self.price is None)
+        return (price_is_none and owned_by_bank)
 
 class Transaction(models.Model):
     """
     Transactions are generated in 2 different situations:
     1. A new token is created when miner is joining game
         buyer = the miner
-        seller = None
-        token = Token(owner=miner, seed=random, price=None)
+        seller = NFT-bank
+        amount = 0
+        token = Token(owner=NFT-bank, price=0)
 
-    2. A miner wants to buy a token from another miner (possible the NFT-bank)
+    2. A miner tries to buy a token from another miner (possible the NFT-bank)
         buyer = the miner buying the token
         seller = the miner selling the token (possible the NFT-bank)
-        token = token
+        amount > 0
+        token = token(owner=seller, price > 0)
     """
     blockchain = models.ForeignKey(
         Blockchain, null=True, on_delete=models.CASCADE)
@@ -257,106 +306,72 @@ class Transaction(models.Model):
 
     def is_valid(self):
 
-        if self.is_miner_to_miner_transaction():
-            # Buyer has enough money
-            if not self.buyer.balance >= self.amount:
-                return False, "Køberen har ikke penge nok"
+        # Buyer has enough money
+        if not self.buyer.balance >= self.amount:
+            return False, "Køberen har ikke penge nok"
 
-            # Seller owns the token
-            if not self.token.owner == self.seller:
-                return False, "Sælgeren ejer ikke længere tokenet"
+        # Seller owns the token
+        if not self.token.owner == self.seller:
+            return False, "Sælgeren ejer ikke længere tokenet"
 
-            # Token er til salg
+        # Token er til salg
+        if not self.token.in_queue_for_initial_transaction():
             if not self.token.price:
                 return False, "Tokenet er ikke til salg"
 
-            return True, ""
+        # Transaction is in proces
+        if self.processed: 
+            return False, "Transaktionen er allerede behandlet"
 
-        elif self.is_initial_transaction():
-            return True, ""
+        return True, ""
 
-        else:
-            assert False, "Tried to validate unknown transaction type"
+
 
     def process(self, miner):
 
         transaction_is_valid, error_message = self.is_valid()
 
         if transaction_is_valid:
-            if self.is_miner_to_miner_transaction():
-                self.token.trade_in_process = False
-                self.token.price = None
-                self.token.owner = self.buyer
-                self.token.save()
+            # update token
+            self.token.transaction_in_process = False
+            self.token.price = None
+            self.token.owner = self.buyer
+            self.token.save()
 
-                self.buyer.balance -= self.amount
-                self.seller.balance += self.amount
+            # update buyer 
+            self.buyer.balance -= self.amount
+            self.buyer.save()
 
-                self.buyer.save()
-                self.seller.save()
+            # update seller
+            self.seller.balance += self.amount
+            self.seller.save()
 
-                if self.seller.name == 'NFT-bank':
-                    self.blockchain.add_token_to_bank()
-                    
-            elif self.is_initial_transaction():
-                self.token.owner = self.buyer
-                self.token.save()
-
-            else:
-                assert False, "Tried to process unknown transaction type"
-            
+            # add miner reward
             miner.refresh_from_db()
             miner.add_miner_reward()
 
         else:
-            if self.is_miner_to_miner_transaction():
+            self.token.transaction_in_process = False
+            self.token.price = None
+            self.token.save()
 
-                self.token.trade_in_process = False
-                self.token.price = None
-                self.token.save()
-
-            else: 
-                assert False, "A transaction that should never be invalid was deemed invalid"
             
         self.processed = True
         self.save()
 
         return transaction_is_valid, error_message
 
-    def create_initial_transaction(miner):
-        """ Create initial transaction for new miner """
-      
-        token = Token.objects.create(
-            blockchain=miner.blockchain,
-            owner=None,
-            price=None,
-            trade_in_process=False,
-        )
-
-        Transaction.objects.create(
-            buyer=miner,
-            seller=None,
-            token=token,
-            blockchain=miner.blockchain,
-            processed=False,
-            amount=None
-        )
-
     def is_initial_transaction(self):
-        return self.amount is None
-
-    def is_miner_to_miner_transaction(self):
-        return self.seller is not None
+        return self.amount == 0
 
     def payload_str(self):
 
         if self.is_initial_transaction():
             payload = f"{self.token.small_svg()} til {self.buyer.name} fra NFT-banken"
 
-        elif self.is_miner_to_miner_transaction():
-            payload = f"{self.amount} DIKU-coins fra {self.buyer.name} til {self.seller.name} for {self.token.small_svg()}"
         else:
-            payload = "Other kind of payload (fix this BUG!)"
+            payload = f"{self.amount} DIKU-coins fra {self.buyer.name} til {self.seller.name} for {self.token.small_svg()}"
+ 
         return payload
 
     def payload_str_for_hash(self):
@@ -364,11 +379,8 @@ class Transaction(models.Model):
         if self.is_initial_transaction():
             payload = f"{self.token.seed} til {self.buyer.name} fra NFT-banken"
 
-        elif self.is_miner_to_miner_transaction():
-            payload = f"{self.amount} DIKU-coins fra {self.buyer.name} til {self.seller.name} for {self.token.seed}"
-
         else:
-            assert False, "Tried to generate payload str for unknown transaction type"
+            payload = f"{self.amount} DIKU-coins fra {self.buyer.name} til {self.seller.name} for {self.token.seed}"
 
         return payload
 

@@ -6,7 +6,6 @@
 
 
 {% block content %}
-
     <h2>Mine tokens</h2>
     <div class="table-responsive mb-5">
         <table class="table table-sm table-striped" >
@@ -14,7 +13,7 @@
                 <tr>
                     <th>ID</th>
                     <th>Ejer</th>
-                    <th>Trade in process</th>
+                    <th>Transaction in process</th>
                     <th>Token</th>
                     <th>Pris</th>
                 </tr>
@@ -24,7 +23,7 @@
                     <tr>
                         <td> {{token.id}}</td>
                         <td>{{ token.owner }}</td>
-                        <td>{{ token.trade_in_process }}</td>
+                        <td>{{ token.transaction_in_process }}</td>
                         <td>{{ token.small_svg|safe}}</td>
                         <td>
                             {% if token.price %}
@@ -53,7 +52,7 @@
                 <tr>
                     <th>Owner</th>
                     <th>Price</th>
-                    <th>Trade in process</th>
+                    <th>Transaction in process</th>
                     <th>For sale</th>
                     <th>Seed</th>
                     <th>Token</th>
@@ -65,7 +64,7 @@
                 <tr>
                     <td>{{ token.owner }}</td>
                     <td>{{ token.price }}</td>
-                    <td>{{ token.trade_in_process }}</td>
+                    <td>{{ token.transaction_in_process }}</td>
                     <td>{{ token.is_for_sale }}</td>
                     <td>{{ token.seed }} </td>
                     <td>{{ token.small_svg|safe}}</td>
