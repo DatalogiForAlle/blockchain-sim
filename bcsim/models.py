@@ -131,6 +131,17 @@ class Miner(models.Model):
     def tokens(self):
         return Token.objects.filter(owner=self)
 
+    def can_buy_token(self, token):
+        if token.trade_in_process:
+            return False
+        if token.owner == self:
+            return False
+        if not token.price:
+            return False 
+        if self.balance < token.price:
+            return False 
+        return True
+
     def color(self):
         """
         Get the unique color identifying the miner in question. 
