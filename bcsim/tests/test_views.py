@@ -109,7 +109,7 @@ def test_home_view_post_request_create_submit_valid(db, client):
         'title': 'bc title',
         'create_bc': 'submit',
         'difficulty': Blockchain.Level.EASY,
-        'type':Blockchain.Type.HAS_NO_TOKENS
+        'type': Blockchain.Type.HAS_NO_TOKENS
     }
 
     response = client.post(reverse('bcsim:home'), data=data)

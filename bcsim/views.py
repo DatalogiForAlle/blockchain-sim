@@ -63,7 +63,7 @@ def market_view(request):
         token_id = int(request.POST['token_id'])
         token = get_object_or_404(
             Token, pk=token_id)
-        token_price_forms[str(token.id)]=token_price_form
+        token_price_forms[str(token.id)] = token_price_form
         if token_price_form.is_valid():
             if token.price:
                 # Price is already set, so we redirect
@@ -81,7 +81,7 @@ def market_view(request):
         'tokens': tokens,
         'miner': miner,
         'blockchain': miner.blockchain,
-        'forms':token_price_forms
+        'forms': token_price_forms
     }
 
     return render(request, 'bcsim/market.html', context)

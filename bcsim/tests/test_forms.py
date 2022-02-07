@@ -27,7 +27,7 @@ def test_blockchain_form_can_create(db):
 
 def test_blockchain_form_title_is_required(db):
     """ Blockchain form without title or creator name is invalid."""
-    data = {'title': '', 'creator_name': '', 
+    data = {'title': '', 'creator_name': '',
             'difficulty': Blockchain.Level.EASY, 'type': Blockchain.Type.HAS_NO_TOKENS}
     form = BlockchainForm(data=data)
 

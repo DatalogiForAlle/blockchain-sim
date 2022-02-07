@@ -6,7 +6,6 @@ from .animal_avatar.animal_avatar import Avatar
 from time import perf_counter
 
 
-
 def new_unique_blockchain_id():
     """
     Create a new unique blockchain ID (8 alphabetic chars)
@@ -137,9 +136,9 @@ class Miner(models.Model):
         if token.owner == self:
             return False
         if not token.price:
-            return False 
+            return False
         if self.balance < token.price:
-            return False 
+            return False
         return True
 
     def color(self):
@@ -278,7 +277,6 @@ class Transaction(models.Model):
             miner.refresh_from_db()
             miner.add_miner_reward()
 
-
         else:
             # Transaction is not valid
             if self.is_miner_to_miner_transaction():
@@ -396,7 +394,7 @@ class Block(models.Model):
         if self.block_num == 0:
             return 'Genesis'
 
-        first_names = ('John', 'Andy', 'Joe', 'Sandy', 'Sally', 
+        first_names = ('John', 'Andy', 'Joe', 'Sandy', 'Sally',
                        'Alice', 'Joanna', 'Serena', 'Oliver', 'Steven')
 
         last_names = ('Johnson', 'Smith', 'Williams', 'Brown',

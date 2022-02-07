@@ -2,6 +2,7 @@ from django import template
 
 register = template.Library()
 
+
 @register.filter
 def get_item(dictionary, key):
     return dictionary.get(str(key))
@@ -10,6 +11,7 @@ def get_item(dictionary, key):
 @register.filter
 def miner_can_buy(token, miner):
     return miner.can_buy_token(token)
+
 
 @register.filter
 def reason_miner_cannot_buy(token, miner):
@@ -22,5 +24,5 @@ def reason_miner_cannot_buy(token, miner):
     elif token.trade_in_process:
         return 'Handel i proces'
     elif token.price > miner.balance:
-        return 'Du har ikke råd' 
+        return 'Du har ikke råd'
     return 'Bug..?'
