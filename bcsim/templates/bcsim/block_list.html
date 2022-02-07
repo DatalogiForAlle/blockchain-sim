@@ -4,7 +4,14 @@
             <p class="mb-1">Blok #{{ block.block_num }}</p> 
             <p class="mb-1">Minearbejder: {{ block.miner.name }}</p>
             <p class="mb-1">Seneste hash: <small>{{ block.prev_hash }}</small></p>
-            <p class="mb-1">Payload: {{ block.payload }}</p>
+            <p class="mb-1">
+                Payload: 
+                {% if block.transaction %}
+                    {{ block.transaction.payload_str|safe }}
+                {% else %}
+                    {{ block.random_payload_str }} 
+                {% endif %}
+            </p>
             <p class="mb-1">Nonce: {{ block.nonce }}</p>
         </div>
     </div>

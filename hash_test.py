@@ -15,10 +15,10 @@ HARD = 0
 N = 100000
 
 for _ in range(N):
-    
+
     s = "vrøvl" + str(randrange(4000000000)) + "sludder"
     hash = hashlib.sha256(s.encode()).hexdigest()
-    
+
     if hash[0] in ["0", "1"]:
         EASY += 1
 
@@ -27,7 +27,7 @@ for _ in range(N):
 
     if hash[:2] in ["00", "11", "22"]:
         HARD += 1
-    
+
 print(EASY/N)
 print(MEDIUM/N)
 print(HARD/N)

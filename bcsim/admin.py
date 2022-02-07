@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Blockchain, Block, Miner
+from .models import Blockchain, Block, Miner, Token, Transaction
+
 
 class BlockchainAdmin(admin.ModelAdmin):
     list_display = (
@@ -15,7 +16,6 @@ class BlockAdmin(admin.ModelAdmin):
         'id',
         'block_num',
         'blockchain',
-        'payload',
         'nonce',
     )
 
@@ -28,6 +28,29 @@ class MinerAdmin(admin.ModelAdmin):
     )
 
 
+class TokenAdmin(admin.ModelAdmin):
+    list_display = (
+        'pk',
+        'owner',
+        'seed',
+        'price',
+        'trade_in_process'
+    )
+
+
+class TransactionAdmin(admin.ModelAdmin):
+    list_display = (
+        'blockchain',
+        'buyer',
+        'seller',
+        'token',
+        'processed',
+        'amount'
+    )
+
+
 admin.site.register(Blockchain, BlockchainAdmin)
+admin.site.register(Transaction, TransactionAdmin)
 admin.site.register(Block, BlockAdmin)
 admin.site.register(Miner, MinerAdmin)
+admin.site.register(Token, TokenAdmin)

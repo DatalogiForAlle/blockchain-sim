@@ -17,7 +17,6 @@ develop:  ## Run development server
 stop: ## Stop developmentment server
 	docker-compose -f docker-compose.dev.yml down --remove-orphans
 
-
 shell:  ## Open shell in running docker development container
 	docker-compose -f docker-compose.dev.yml exec web /bin/bash
 
@@ -45,17 +44,15 @@ test_views: ## Execute tests within the docker image
 	DJANGO_SETTINGS_MODULE=config.settings docker-compose -f docker-compose.dev.yml run web pytest bcsim/tests/test_views.py
 
 
-flake8: ## PEP8 codestyle check
-	flake8 --exclude bcsim/migrations --extend-exclude accounts/migrations
+# ---------- Codestyle  ---------- #
+tidy_bcsim: # Reformat source code to make it adhere to PEP8
+	docker-compose -f docker-compose.dev.yml exec web autopep8 --in-place --recursive --exclude=migrations,animal_avatar bcsim
 
-# This target runs both PEP8 checks and test suite
-check: flake8 test
+check_views: # Check PEP8 standards for views.py file
+	docker-compose -f docker-compose.dev.yml exec web pycodestyle bcsim/views.py
 
-tidy:   ## Reformat source files to adhere to PEP8 
-	black -79 . --exclude=bcsim/migrations --extend-exclude=accounts/migrations
-
-
-
+check_views_show_source: #jierj
+	docker-compose -f docker-compose.dev.yml exec web pycodestyle --show-source --show-pep8 bcsim/views.py
 
 # ---------- Production ---------- #
 production_stop: ## Stop production server

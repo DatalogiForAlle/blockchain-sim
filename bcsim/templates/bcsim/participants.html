@@ -14,8 +14,11 @@
             <tr>
                 <th scope="col">#</th>
                 <th scope="col">Navn</th>
-                <th scope="col">Antal blokke</th>
+                <th scope="col">Antal minede blokke</th>
                 <th scope="col">Saldo</th>
+                {% if blockchain.has_tokens %}
+                    <th scope="col">Tokens</th>
+                {% endif %}
             </tr>
         </thead>
         <tbody>
@@ -29,6 +32,17 @@
                     <td>{{ miner.name }} </td>
                     <td>{{ miner.num_mined_blocks }} </td>
                     <td>{{ miner.balance }}</td>
+                    {% if miner.blockchain.has_tokens %}
+                        <td>
+                            {% if miner.tokens %}
+                                {% for token in miner.tokens %}
+                                    {{ token.small_svg|safe}}
+                                {% endfor %}
+                            {% else %}
+                                <i>Ingen tokens</i>
+                            {% endif %}
+                        </td>
+                    {% endif %}
                     </tr>
             {% endfor %}
         </tbody>

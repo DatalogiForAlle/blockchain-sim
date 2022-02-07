@@ -6,16 +6,13 @@ To run only one or some tests:
 docker-compose -f docker-compose.dev.yml run web pytest -k <substring of test function names to run>
 """
 
-from django.core.exceptions import ValidationError
 from django.urls import reverse
 from ..models import Blockchain, Block
-from ..forms import BlockchainForm, BlockForm, JoinForm
-from ..views import next_payload
+from ..forms import BlockchainForm, JoinForm
 from .factories import BlockChainFactory, BlockFactory, BlockFactory, MinerFactory
 import pytest
 from pytest_django.asserts import assertTemplateUsed, assertContains, assertNotContains
 from datetime import datetime
-
 
 
 def test_participants_view(db, client):
@@ -28,9 +25,8 @@ def test_participants_view(db, client):
     session['miner_id'] = miner.id
     session.save()
 
-
     response = client.get(reverse('bcsim:participants'))
-    
+
     assert response.status_code == 200
     assertTemplateUsed(response, 'bcsim/participants.html')
 
@@ -112,7 +108,8 @@ def test_home_view_post_request_create_submit_valid(db, client):
         'creator_name': 'Bobby',
         'title': 'bc title',
         'create_bc': 'submit',
-        'difficulty': 2
+        'difficulty': Blockchain.Level.EASY,
+        'type': Blockchain.Type.HAS_NO_TOKENS
     }
 
     response = client.post(reverse('bcsim:home'), data=data)
@@ -126,7 +123,7 @@ def test_home_view_post_request_create_submit_valid(db, client):
 
     # an initial block has been created
     assert Block.objects.all().count() == 1
-    assert Block.objects.all().first().payload == 'Genesis'
+    assert Block.objects.all().first().random_payload_str() == 'Genesis'
 
     # correct session data is now createad
     assert 'xxx' not in client.session
@@ -161,7 +158,7 @@ def test_home_view_post_request_create_submit_invalid_no_provided_title(db, clie
     # no session data is createad
     assert 'miner_id' not in client.session
     assert 'blockchain_id' not in client.session
- 
+
     # client should be returned to home page
     assert response.status_code == 200
     assertTemplateUsed(response, 'bcsim/home.html')
@@ -187,7 +184,7 @@ def test_mine_view_exists_and_returns_correct_template(client, db):
     assert response.context['miner'] == miner
     assert response.context['blockchain'] == block.blockchain
     assert response.context['blocks'].last() == block
-    assert response.context['prev_hash'] == block.hash()
+    assert response.context['next_block'].prev_hash == block.hash()
 
 
 def test_mine_view_if_user_has_no_session(client, db):

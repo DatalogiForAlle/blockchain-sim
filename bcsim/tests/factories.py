@@ -28,6 +28,5 @@ class BlockFactory(factory.django.DjangoModelFactory):
     block_num = 0
     blockchain = factory.SubFactory(BlockChainFactory)
     miner = factory.SubFactory(MinerFactory)
-    payload = 'Genesis'
     nonce = '0'
     prev_hash = '0'
