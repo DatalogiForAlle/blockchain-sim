@@ -1,15 +1,18 @@
 {% extends "bcsim/base.html" %}
 {% load crispy_forms_tags %}
+{% load custom_tags %}
 
 {% block title %}Markedsplads{% endblock %}
 
 
 {% block content %}
+
     <h2>Mine tokens</h2>
     <div class="table-responsive mb-5">
         <table class="table table-sm table-striped" >
             <thead>
                 <tr>
+                    <th>ID</th>
                     <th>Ejer</th>
                     <th>Trade in process</th>
                     <th>Token</th>
@@ -19,6 +22,7 @@
             {% for token in tokens %}
                 {% if token.owner == miner %}
                     <tr>
+                        <td> {{token.id}}</td>
                         <td>{{ token.owner }}</td>
                         <td>{{ token.trade_in_process }}</td>
                         <td>{{ token.small_svg|safe}}</td>
@@ -29,11 +33,11 @@
                                 <form action="{% url 'bcsim:market' %}" method="POST">
                                     {% csrf_token %}
                                     <div class="d-flex">
-                                        {{ form |crispy }}
+                                        {{ forms|get_item:token.id|crispy }}
                                         <input type="hidden" name="token_id" value="{{ token.id }}">
                                         <button class="btn btn-secondary">Sæt til salg</button>
                                     </div>     
-                                </form>
+                                </form> 
                             {% endif %}
                         </td>
                     </tr>
@@ -68,14 +72,18 @@
                         {% if token.price %}
                             {% if token.owner != miner %}
                                 {% if not token.trade_in_process %}
-                                    <td>
-                                        <form action="{% url 'bcsim:buy_token' %}" method="POST">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="token_id" value="{{ token.id }}">
-                                            <input type="hidden" name="seller_id" value="{{ token.owner.id }}">
-                                            <button class="btn btn-secondary">KØB</button>
-                                        </form>
-                                    </td>
+                                    {% if miner.balance >= token.price %}
+                                        <td>
+                                            <form action="{% url 'bcsim:buy_token' %}" method="POST">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="token_id" value="{{ token.id }}">
+                                                <input type="hidden" name="seller_id" value="{{ token.owner.id }}">
+                                                <button class="btn btn-secondary">KØB</button>
+                                            </form>
+                                        </td>
+                                    {% else %}
+                                        <td>Du har ikke råd</td>
+                                    {% endif %}
                                 {% else %}
                                     <td>
                                         Handel i process

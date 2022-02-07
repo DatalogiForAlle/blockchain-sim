@@ -15,7 +15,8 @@ import pytest
 
 def test_blockchain_form_can_create(db):
     """ Submitting a valid blockchain form creates a blockchain."""
-    data = {'creator_name': 'Jane', 'title': 'bc title', 'difficulty': 2}
+    data = {'creator_name': 'Jane', 'title': 'bc title',
+            'difficulty': Blockchain.Level.EASY, 'type': Blockchain.Type.HAS_NO_TOKENS}
     form = BlockchainForm(data=data)
 
     assert form.is_valid()
@@ -26,7 +27,8 @@ def test_blockchain_form_can_create(db):
 
 def test_blockchain_form_title_is_required(db):
     """ Blockchain form without title or creator name is invalid."""
-    data = {'title': '', 'creator_name': '', 'difficulty': 2}
+    data = {'title': '', 'creator_name': '', 
+            'difficulty': Blockchain.Level.EASY, 'type': Blockchain.Type.HAS_NO_TOKENS}
     form = BlockchainForm(data=data)
 
     assert not form.is_valid()
@@ -43,14 +45,14 @@ def blockform_data():
 
 
 def test_block_form_is_valid(db, blockform_data):
-    """ Test valid data gives valid block """
+    """ Test valid data gives valid BlockForm """
 
     form = BlockForm(data=blockform_data)
     assert form.is_valid()
 
 
 def test_block_form_nonce_has_to_be_integer_1(db, blockform_data):
-    """ Form is invalid if nonce is not an integer """
+    """ BlockForm is invalid if nonce is not an integer """
 
     blockform_data['nonce'] = 'fdd324'
     form = BlockForm(data=blockform_data)
@@ -61,7 +63,7 @@ def test_block_form_nonce_has_to_be_integer_1(db, blockform_data):
 
 
 def test_block_form_nonce_has_to_be_integer_2(db, blockform_data):
-    """ Form is invalid if nonce is not an integer """
+    """ BlockForm is invalid if nonce is not an integer """
     blockform_data['nonce'] = '1.45'
     form = BlockForm(data=blockform_data)
 
@@ -71,7 +73,7 @@ def test_block_form_nonce_has_to_be_integer_2(db, blockform_data):
 
 
 def test_join_form_with_valid_data_is_valid(db):
-    """ Form is valid when there is a blockchain with provided id """
+    """ JoinForm is valid when there is a blockchain with provided id """
     data = {
         'blockchain_id': BlockChainFactory().id,
         'name': 'Alice'
@@ -102,10 +104,9 @@ def test_join_form_name_is_required(db):
 
     assert not form.is_valid()
     assert 'name' in form.errors
-    assert 'Dette felt er påkrævet' in form.errors['name']
 
 
-def test_join_form_name_is_required(db):
+def test_join_form_blockchain_id_is_required(db):
     data = {
         'blockchain_id': '',
         'name': 'Bob'
@@ -117,9 +118,9 @@ def test_join_form_name_is_required(db):
 
 
 def test_name_has_to_be_unique_on_blockchain(db):
-    """ Form is invalid if there is already a miner in the blockchai with the requested name """
+    """ Form is invalid if there is already a miner in the blockchain with the requested name """
     blockchain = BlockChainFactory()
-    miner = MinerFactory(name="grethen", blockchain=blockchain)
+    MinerFactory(name="grethen", blockchain=blockchain)
     data = {'name': 'grethen', 'blockchain_id': blockchain.id}
     form = JoinForm(data=data)
 

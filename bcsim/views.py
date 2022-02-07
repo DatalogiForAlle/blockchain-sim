@@ -54,13 +54,16 @@ def market_view(request):
     miner_id = request.session['miner_id']
     miner = get_object_or_404(Miner, pk=miner_id)
 
-    token_price_form = TokenPriceForm()
+    tokens = Token.objects.filter(
+        blockchain=miner.blockchain).order_by('-price')
+    token_price_forms = {str(token.id): TokenPriceForm() for token in tokens}
 
     if request.method == 'POST':
         token_price_form = TokenPriceForm(request.POST)
         token_id = int(request.POST['token_id'])
         token = get_object_or_404(
             Token, pk=token_id)
+        token_price_forms[str(token.id)]=token_price_form
         if token_price_form.is_valid():
             if token.price:
                 # Price is already set, so we redirect
@@ -74,17 +77,11 @@ def market_view(request):
             token.save()
             return redirect(reverse('bcsim:market'))
 
-    tokens = Token.objects.filter(
-        blockchain=miner.blockchain).order_by('-price')
-
-#   tokens_for_sale = tokens.exclude(owner=miner).filter(price__isnull=False)
-
     context = {
         'tokens': tokens,
-        #           'tokens_for_sale': tokens_for_sale,
         'miner': miner,
         'blockchain': miner.blockchain,
-        'form': token_price_form
+        'forms':token_price_forms
     }
 
     return render(request, 'bcsim/market.html', context)

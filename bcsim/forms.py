@@ -26,7 +26,7 @@ class BlockchainForm(forms.ModelForm):
             'title': 'Titlen, du vælger her, vil fremgå som overskrift på din blockchain',
             'type':
                 'Hvilken slags blockchain ønsker du at skabe?<br>' +
-                ' - Uden token-marked: Transaktionerne er mellem tilfældige fiktive personer<br>' +
+                ' - Uden token-marked: Transaktioner opstår mellem tilfældige fiktive personer<br>' +
                 ' - Med token-marked: Transaktioner opstår, når minearbejdere køber og sælger tokens af hinanden<br>',
             'difficulty':
                 'Hvor svært skal det være at føje blokke til din blockchain?<br>' +

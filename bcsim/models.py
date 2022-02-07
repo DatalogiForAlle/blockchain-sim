@@ -6,6 +6,7 @@ from .animal_avatar.animal_avatar import Avatar
 from time import perf_counter
 
 
+
 def new_unique_blockchain_id():
     """
     Create a new unique blockchain ID (8 alphabetic chars)
