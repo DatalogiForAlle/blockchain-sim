@@ -1,11 +1,9 @@
 import time
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
 from django.http import HttpResponse
-
 from .models import Blockchain, Block, Miner, Token, Transaction
 from .forms import (BlockchainForm, JoinForm, BlockForm,
                     LoginForm, TokenPriceForm)
@@ -120,8 +118,7 @@ def participants_view(request):
     miner_id = request.session['miner_id']
     miner = get_object_or_404(Miner, pk=miner_id)
     miners = Miner.objects.filter(
-        blockchain=miner.blockchain)
-    
+        blockchain=miner.blockchain).order_by('-balance')
     context = {'miners': miners,
                'blockchain': miner.blockchain, 'client': miner}
     return render(request, 'bcsim/participants.html', context)
@@ -216,7 +213,7 @@ def home_view(request):
                 if new_blockchain.has_tokens():
                     # create NTF-bank (miner)
                     nft_bank = Miner.objects.create(
-                        name='NFT-bank',
+                        name='NFT-banken',
                         blockchain=new_blockchain,
                         miner_num=Miner.objects.filter(
                             blockchain=new_blockchain).count(),
@@ -271,9 +268,13 @@ def home_view(request):
     }
 
     if 'miner_id' in request.session:
-        miner = Miner.objects.get(id=request.session['miner_id'])
-        context['miner'] = miner
-        context['blockchain'] = miner.blockchain
+        try:
+            miner = Miner.objects.get(id=request.session['miner_id'])
+        except:
+            return redirect(reverse('bcsim:logout'))
+        else:
+            context['miner'] = miner
+            context['blockchain'] = miner.blockchain
 
     context['expand'] = expand
 
@@ -303,7 +304,6 @@ def toggle_pause_view(request):
 def mine_view(request):
     miner_id = request.session['miner_id']
     miner = get_object_or_404(Miner, pk=miner_id)
-
     blockchain = miner.blockchain
     blocks = Block.objects.filter(
         blockchain=blockchain).order_by('-block_num')
@@ -311,26 +311,15 @@ def mine_view(request):
     current_block_num = len(blocks)
     form = BlockForm()
     hash = None
-
-    if blockchain.has_tokens():
-        unprocessed_transactions = Transaction.objects.filter(
-            blockchain=blockchain, processed=False)
-        if unprocessed_transactions.count() == 0:
-            next_transaction = None
-        else:
-            next_transaction = unprocessed_transactions.first()
-    else:
-        unprocessed_transactions = None
-        next_transaction = None
+    unprocessed_transactions, next_transaction = blockchain.get_unprocessed_transactions()
 
     potential_next_block = Block(
-        block_num=current_block_num,
-        blockchain=blockchain,
-        miner=miner,
-        prev_hash=last_block.hash(),
-        nonce=None,
-        transaction=next_transaction
-    )
+            block_num=current_block_num,
+            blockchain=blockchain,
+            miner=miner,
+            prev_hash=last_block.hash(),
+            nonce=None,
+            transaction=next_transaction)
 
     if request.method == "POST":
 

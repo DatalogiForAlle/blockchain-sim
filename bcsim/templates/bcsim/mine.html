@@ -60,7 +60,7 @@
                     {% if blockchain.has_tokens %}
                         {{ unprocessed_transactions.first.payload_str|safe }}
                     {% else %}
-                        {{ next_block.payload_str }} 
+                        {{ next_block.random_payload_str }} 
                     {% endif %}
                 </p>
                     <form action="{% url 'bcsim:mine' %}" method="post" id="mine_form" novalidate>
@@ -88,32 +88,21 @@
                 <small>{{ cur_hash }}</small>
             </p>
         {% endif %}  
+
+        <!-- The queue of waiting transactions -->
         {% if blockchain.has_tokens %}
-            <h4 class="mt-5">Ventende transaktioner (skal live-opdateres...)</h4 >
-            <div class="table-responsive">
-                <table class="table table-sm table-striped" >
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Køber</th>
-                            <th>Sælger</th>
-                            <th>Pris</th>
-                            <th>Payload</th>
+        <h4 class="mt-5">Kommende transaktioner</h4>
+        <div class="table-responsive">
+            <table class="table table-sm table-striped" >
+                {% for transaction in unprocessed_transactions %}
+                    {% if forloop.counter > 1 %}
+                        <tr>   
+                            <td>&nbsp&nbsp{{ transaction.payload_str|safe }}</td>
                         </tr>
-                    </thead>
-                    {% for transaction in unprocessed_transactions %}
-                        {% if forloop.counter > 1 %}
-                            <tr>   
-                                <td>{{ transaction.id }}</td>
-                                <td>{{ transaction.buyer }}</td>
-                                <td>{{ transaction.seller }}</td>
-                                <td>{{ transaction.token.price }} </td>
-                                <td>{{ transaction.payload_str|safe }}</td>
-                            </tr>
-                        {% endif %}
-                    {% endfor %}
-                </table>
-            </div>
+                    {% endif %}
+                {% endfor %}
+            </table>
+        </div>
         {% endif %}
       
     </div> 
