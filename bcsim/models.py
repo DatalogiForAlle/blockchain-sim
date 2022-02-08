@@ -31,8 +31,8 @@ class Blockchain(models.Model):
     NUM_TOKENS_FOR_SALE_IN_BANK = 3
 
     class Type(models.IntegerChoices):
-        HAS_NO_TOKENS = 1, ('Uden token-marked')
-        HAS_TOKENS = 2, ('Med token-marked')
+        HAS_NO_TOKENS = 1, ('Uden NFT-marked')
+        HAS_TOKENS = 2, ('Med NFT-marked')
 
     type = models.PositiveSmallIntegerField(
         choices=Type.choices,
@@ -86,7 +86,7 @@ class Blockchain(models.Model):
             )
 
     def get_bank(self):
-        nft_bank = Miner.objects.get(blockchain=self, name='NFT-bank')
+        nft_bank = Miner.objects.get(blockchain=self, name='NFT-banken')
         return nft_bank
 
     def has_tokens(self):
@@ -123,6 +123,19 @@ class Blockchain(models.Model):
                 return True
 
         return False
+
+    def get_unprocessed_transactions(self):
+        if self.has_tokens():
+            unprocessed_transactions = Transaction.objects.filter(
+                    blockchain=self, processed=False)
+            if unprocessed_transactions.count() == 0:
+                next_transaction = None
+            else:
+                next_transaction = unprocessed_transactions.first()
+        else:
+            unprocessed_transactions = None
+            next_transaction = None
+        return unprocessed_transactions, next_transaction
 
 
 def new_unique_miner_id():
@@ -364,18 +377,21 @@ class Transaction(models.Model):
     def is_initial_transaction(self):
         return self.amount == 0
 
+
     def payload_str(self):
+        """ Payload string to be shown in user interface """
 
         if self.is_initial_transaction():
-            payload = f"{self.token.small_svg()} til {self.buyer.name} fra NFT-banken"
+            payload = f"{self.token.small_svg()} til <b>{self.buyer.name}</b> fra NFT-banken"
 
         else:
-            payload = f"{self.amount} DIKU-coins fra {self.buyer.name} til {self.seller.name} for {self.token.small_svg()}"
- 
+            payload = f"{self.token.small_svg()} til <b>{self.buyer.name}</b> fra {self.seller.name}  for {self.amount} DIKU-coins"
+
         return payload
 
-    def payload_str_for_hash(self):
 
+    def payload_str_for_hash(self):
+        """ Payload string used when calculating hash of block """
         if self.is_initial_transaction():
             payload = f"{self.token.seed} til {self.buyer.name} fra NFT-banken"
 
