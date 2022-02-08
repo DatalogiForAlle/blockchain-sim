@@ -34,7 +34,7 @@ class TokenAdmin(admin.ModelAdmin):
         'owner',
         'seed',
         'price',
-        'trade_in_process'
+        'transaction_in_process'
     )
 
 
