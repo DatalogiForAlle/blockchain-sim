@@ -26,8 +26,8 @@ class BlockchainForm(forms.ModelForm):
             'title': 'Titlen, du vælger her, vil fremgå som overskrift på din blockchain',
             'type':
                 'Hvilken slags blockchain ønsker du at skabe?<br>' +
-                ' - Uden token-marked: Transaktioner opstår mellem tilfældige fiktive personer<br>' +
-                ' - Med token-marked: Transaktioner opstår, når minearbejdere køber og sælger tokens af hinanden<br>',
+                ' - Uden NFT-marked: Deltagerne miner fiktive transaktioner<br>' +
+                ' - Med NFT-marked: Deltagerne kan købe og sælge tokens af hinanden<br>',
             'difficulty':
                 'Hvor svært skal det være at føje blokke til din blockchain?<br>' +
                 ' - Nem: Gyldige hashes starter med 0 eller 1 (ca. 12 % af alle hashes gyldige)<br>' +

@@ -139,7 +139,7 @@ def logout_view(request):
     del_session_vars(all_session_vars, request)
 
     mgs = (
-        f"Du forlod blockchainen med ID={blockchain_id}."
+        f"Du forlod blockchainen med ID={blockchain_id}. "
         f"Dit minearbejder-ID var {miner_id}."
     )
     messages.info(request, mgs)
@@ -376,7 +376,7 @@ def mine_view(request):
                         messages.success(
                             request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
 
-                    if blockchain.has_tokens():
+                    elif blockchain.has_tokens():
                         transaction_is_valid, error_message = next_transaction.process(
                             miner)
                         if transaction_is_valid:
