@@ -28,10 +28,10 @@
                 {% else %}
                     <tr>
                 {% endif %}                   
-                    <th scope="row">{{ forloop.counter }}</th>
-                    <td>{{ miner.name }} </td>
-                    <td>{{ miner.num_mined_blocks }} </td>
-                    <td>{{ miner.balance }}</td>
+                    <th class="align-middle" scope="row">{{ forloop.counter }}</th>
+                    <td class="align-middle">{{ miner.name }} </td>
+                    <td class="align-middle">{{ miner.num_mined_blocks }} </td>
+                    <td class="align-middle">{{ miner.balance }}</td>
                     {% if miner.blockchain.has_tokens %}
                         <td>
                             {% if miner.tokens %}
