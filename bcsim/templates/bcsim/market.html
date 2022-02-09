@@ -27,9 +27,9 @@
                             <tr>
                                 <td>{{ token.small_svg|safe}}</td>
                                     {% if token.price %}
-                                    <td class="align-middle">    
-                                        {{ token.price }}
-                                    </td>
+                                        <td class="align-middle">    
+                                            {{ token.price }}
+                                        </td>
                                     {% else %}
                                     <td class="align-middle">
                                         <form class="pl-3" action="{% url 'bcsim:market' %}" method="POST" id="price_form_{{ token.id }}">
@@ -75,7 +75,13 @@
                         <tr>
                             <td>&nbsp&nbsp{{ token.small_svg|safe}}</td>
                             <td class="align-middle">{{ token.owner }}</td>
-                            <td class="align-middle">{{ token.price }}</td>
+                            <td class="align-middle">
+                                {% if token.price %}
+                                    {{ token.price }}
+                                {% else %}
+                                    Ingen
+                                {% endif %}
+                            </td>
                             <td class="align-middle">
                                 {% if token|miner_can_buy:miner %}
                                     <form action="{% url 'bcsim:buy_token' %}" method="POST">
