@@ -86,49 +86,6 @@
 {% endif %}
 {% endblock content %}
 
-
-{% block footer %}
-
-<footer id="footer" class="bg-light" style="position:absolute; bottom:0; width:100%;">
-    <!-- footer when size >= large -->
-    <nav class="py-3 d-none d-lg-block bg-light">
-        <div class="container">
-            <div class="d-flex text-center justify-content-between flex-row">
-                <a href="https://dataekspeditioner.dk/"><img src="{% static 'img/dataekspeditioner_sort.png' %}" class="pt-4 pb-5 pb-md-0" width="240" alt="dataekspeditioner-logo"></a>
-                <a href="https://ku.dk"><img src="{% static 'img/ku_logo_dk_hh-300x112.png' %}" class="px-5"  width="310"  alt="Københavns Universitet"></a>
-                <a href="https://novonordiskfonden.dk/da/"><img src="{% static 'img/NNF_blue_RGB_solid.png' %}" class="pt-1 pr-3" width="110" alt="Novo Nordisk Fonden"></a> 
-            </div>
-        </div>
-    </nav>
-
-    <!-- footer when small <= size < largen -->
-    <div class="d-none d-sm-block d-lg-none">
-        <nav class="py-4 px-sm-5 bg-light">
-            <div class="d-flex justify-content-between flex-row bg-light">
-                <a href="https://dataekspeditioner.dk/"><img src="{% static 'img/dataekspeditioner_sort.png' %}" class="pt-3 pl-3" width="150" alt="dataekspeditioner-logo"></a>
-                <a href="https://ku.dk"><img src="{% static 'img/ku_logo_dk_hh-300x112.png' %}" class="px-2" width="150"  alt="Københavns Universitet"></a>
-                <a href="https://novonordiskfonden.dk/da/"><img src="{% static 'img/NNF_blue_RGB_solid.png' %}" class="pr-3" width="80" alt="Novo Nordisk Fonden"></a> 
-            </div>
-        </nav>  
-    </div>
-
-    <!-- footer when size < small -->
-    <div class="d-sm-none">
-        <nav class="py-4 px-sm-5 bg-light">
-            <div class="d-flex justify-content-between flex-row bg-light">
-                <a href="https://dataekspeditioner.dk/"><img src="{% static 'img/dataekspeditioner_sort.png' %}" class="pt-2 pl-2" width="130" alt="dataekspeditioner-logo"></a>
-                <a href="https://ku.dk"><img src="{% static 'img/ku_logo_dk_hh-300x112.png' %}" class="px-2" width="120"  alt="Københavns Universitet"></a>
-                <a href="https://novonordiskfonden.dk/da/"><img src="{% static 'img/NNF_blue_RGB_solid.png' %}" class="pr-3" width="70" alt="Novo Nordisk Fonden"></a> 
-            </div>
-        </nav>  
-    </div>
-
-</footer>
-
-{% endblock footer %}
-
-
-
 {% block javascript %}
 <script>
 
