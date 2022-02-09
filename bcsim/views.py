@@ -7,7 +7,9 @@ from django.http import HttpResponse
 from .models import Blockchain, Block, Miner, Token, Transaction
 from .forms import (BlockchainForm, JoinForm, BlockForm,
                     LoginForm, TokenPriceForm)
-from .decorators import require_miner_id_is_in_session
+from .decorators import (require_miner_id_is_in_session, 
+        require_blockchain_has_token_market)
+
 
 
 def del_session_vars(session_vars, request):
@@ -18,6 +20,7 @@ def del_session_vars(session_vars, request):
 
 @require_POST
 @require_miner_id_is_in_session
+@require_blockchain_has_token_market
 def buy_token_view(request):
 
     miner_id = request.session['miner_id']
@@ -65,6 +68,7 @@ def buy_token_view(request):
 
 
 @require_miner_id_is_in_session
+@require_blockchain_has_token_market
 def market_view(request):
     miner_id = request.session['miner_id']
     miner = get_object_or_404(Miner, pk=miner_id)
@@ -227,7 +231,7 @@ def home_view(request):
                         is_creator=False)
 
                     # Add initial tokens to NFT-bank
-                    new_blockchain.add_token_to_bank(number_of_tokens_to_add=Blockchain.NUM_TOKENS_FOR_SALE_IN_BANK)
+                    new_blockchain.add_token_to_bank(number_of_tokens_to_add=Blockchain.NUM_TOKENS_FOR_SALE_IN_BANK_AT_ALL_TIMES)
   
                 # create initial block in chain
                 Block.objects.create(
@@ -409,15 +413,11 @@ def mine_view(request):
 
 
 @require_GET
+@require_miner_id_is_in_session
 def block_list_view_htmx(request):
-
-    try:
-        blockchain_id = request.session['blockchain_id']
-        blockchain = Blockchain.objects.get(pk=blockchain_id)
-    except BaseException:
-        return HttpResponse("Error: Client does not belong to blockchain")
-    else:
-        blocks = Block.objects.filter(
-            blockchain=blockchain).order_by('-block_num')
-        return render(request, 'bcsim/block_list.html',
-                      {'blocks': blocks, 'blockchain': blockchain})
+    blockchain_id = request.session['blockchain_id']
+    blockchain = Blockchain.objects.get(pk=blockchain_id)
+    blocks = Block.objects.filter(
+        blockchain=blockchain).order_by('-block_num')
+    return render(request, 'bcsim/block_list.html',
+                    {'blocks': blocks, 'blockchain': blockchain})
