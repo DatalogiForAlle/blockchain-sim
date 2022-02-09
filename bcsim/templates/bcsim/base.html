@@ -14,43 +14,51 @@
         <link href="{% static "bootstrap.min.css" %}" rel="stylesheet" />
        </head>
     <body>
-        <!-- Navigation-->
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
-            <div class="container">
-                <a class="navbar-brand" href="{% url 'bcsim:home' %}">Blockchain-Sim</a>
-            {% if request.session.miner_id %}                
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+        <!-- below two divs control the behaviour of the footer. padding-bottom is the footer height -->
+        <div id="page-container" style="position:relative; min-height:100vh;">
+            <div id="content-wrap"  style="padding-bottom:5rem;">
 
-                <div class="collapse navbar-collapse" id="navbarResponsive">
-                    <ul class="navbar-nav ml-auto">
-                        <li class="nav-item"><a class="nav-link" href="{% url 'bcsim:mine' %}">Minedrift</a></li>
-                        {% if blockchain.has_tokens %}
-                            <li class="nav-item"><a class="nav-link" href="{% url 'bcsim:market' %}">Markedsplads</a></li>
+                <!-- Navigation-->
+                <nav class="navbar navbar-expand-lg navbar-dark bg-dark static-top">
+                    <div class="container">
+                        <a class="navbar-brand" href="{% url 'bcsim:home' %}">Blockchain-Sim</a>
+                        {% if request.session.miner_id %}                
+                            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+
+                            <div class="collapse navbar-collapse" id="navbarResponsive">
+                                <ul class="navbar-nav ml-auto"> 
+                                    <li class="nav-item"><a class="nav-link" href="{% url 'bcsim:mine' %}">Minedrift</a></li>
+                                    {% if blockchain.has_tokens %}
+                                        <li class="nav-item"><a class="nav-link" href="{% url 'bcsim:market' %}">Markedsplads</a></li>
+                                    {% endif %}
+                                    <li class="nav-item"><a class="nav-link" href="{% url 'bcsim:participants' %}">Deltagere</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="{% url 'bcsim:invite' %}">Inviter</a></li>
+                                    <li class="nav-item"><a class="nav-link" href="{% url 'bcsim:home' %}">Min bruger</a></li>
+                                </ul>
+                            </div>
                         {% endif %}
-                        <li class="nav-item"><a class="nav-link" href="{% url 'bcsim:participants' %}">Deltagere</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'bcsim:invite' %}">Inviter</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{% url 'bcsim:home' %}">Min bruger</a></li>
-                    </ul>
-                </div>
-            {% endif %}
-            </div>
-        </nav>
-        
-        <!-- Page content-->
-        <main class="container mt-4 mt-lg-5">
-
-            <!-- Potential messages -->
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-dark">
-                        {{ message }}
                     </div>
-                {% endfor %}
-            {% endif %}
-            {% block content %}  {% endblock %}
+                </nav>
+                
+                <!-- Page content-->
+                <main class="container mt-4 mt-lg-5">
+
+                    <!-- Potential messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-dark">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    {% block content %}  {% endblock %}
+                
+                </main>          
         
-        </main>          
-        
+            </div> <!-- End of content-wrap -->
+
+            {% block footer %}{% endblock %}
+        </div> <!-- End of page-container-->
 
         <!-- Bootstrap core JS-->
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>

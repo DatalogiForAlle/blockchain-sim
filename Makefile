@@ -29,7 +29,6 @@ migrate: # make migrations
 dev_superuser: # make development superuser 
 	docker-compose -f docker-compose.dev.yml exec web python manage.py createsuperuser
 
-
 # ---------- Checks and tests ---------- #
 test: ## Execute tests within the docker image
 	DJANGO_SETTINGS_MODULE=config.settings docker-compose -f docker-compose.dev.yml run --rm web pytest
@@ -42,7 +41,6 @@ test_forms: ## Execute tests within the docker image
 
 test_views: ## Execute tests within the docker image
 	DJANGO_SETTINGS_MODULE=config.settings docker-compose -f docker-compose.dev.yml run web pytest bcsim/tests/test_views.py
-
 
 # ---------- Codestyle  ---------- #
 tidy_bcsim: # Reformat source code to make it adhere to PEP8
@@ -69,4 +67,3 @@ production_accesslogs: ## Show nginx access logs
 
 production_shell: # Open shell in running docker production container
 	docker-compose -f docker-compose.prod.yml exec web /bin/bash
-

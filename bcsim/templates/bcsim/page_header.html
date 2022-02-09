@@ -1,0 +1,10 @@
+<h4 class="mb-2"><span class="text-black-50">Blockchain [{{ blockchain.id }}]:</span> {{ blockchain.title }} | {{page_title}}</h4> 
+<p class="mb-4">
+    <span class="px-4 mr-2" style="background-color:{{ miner.color }}"></span>
+    Hold: {{ miner.name }}
+    | Saldo: <b>{{ miner.balance }}</b> DIKU-coins
+    {% if blockchain.has_tokens %}
+    | Antal Tokens: <b>{{ miner.number_of_tokens }}</b> </span>
+    {% endif %}
+    <span class="px-4 ml-2" style="background-color:{{ miner.color }}"></span>
+</p> 
