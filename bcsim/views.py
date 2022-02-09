@@ -121,12 +121,14 @@ def participants_view(request):
     miner_id = request.session['miner_id']
     miner = get_object_or_404(Miner, pk=miner_id)
     miners = Miner.objects.filter(
-        blockchain=miner.blockchain).order_by('-balance')
+        blockchain=miner.blockchain).order_by('-balance').exclude(name='NFT-banken')
+    bank = miner.blockchain.get_bank()
     context = {
             'miner':miner,
             'miners': miners,
             'blockchain': miner.blockchain, 
             'client': miner,
+            'bank': bank,
             'page_title': 'Deltagere'}
     return render(request, 'bcsim/participants.html', context)
 
