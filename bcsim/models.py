@@ -29,7 +29,8 @@ class Blockchain(models.Model):
     BANK_TOKEN_PRICE = 150
     NUM_INITIAL_TRANSACTIONS_PR_MINER = 2
     NUM_TOKENS_FOR_SALE_IN_BANK_AT_ALL_TIMES = 3
-
+    ADD_TO_CHAIN_TIME_DELAY_IN_SECONDS = 2 
+    
     class Type(models.IntegerChoices):
         HAS_NO_TOKENS = 1, ('Uden NFT-marked')
         HAS_TOKENS = 2, ('Med NFT-marked')
