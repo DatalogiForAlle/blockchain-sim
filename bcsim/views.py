@@ -29,7 +29,7 @@ def buy_token_view(request):
 
     if miner.has_trade_in_process_as_buyer():
         mgs = (
-            f"Du har allerede et køb i køen."
+            f"Du har allerede et køb i proces."
         )
         messages.info(request, mgs)
 
