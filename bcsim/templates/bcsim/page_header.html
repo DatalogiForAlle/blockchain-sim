@@ -4,7 +4,8 @@
     Hold: {{ miner.name }}
     | Saldo: <b>{{ miner.balance }}</b> DIKU-coins
     {% if blockchain.has_tokens %}
-    | Antal Tokens: <b>{{ miner.number_of_tokens }}</b> </span>
+    | Antal Tokens: <b>{{ miner.number_of_tokens }}</b> 
+    | Har køb i proces: <b>{% if miner.has_trade_in_process_as_buyer %} Ja {% else %} Nej {% endif %}</b>
     {% endif %}
     <span class="px-4 ml-2" style="background-color:{{ miner.color }}"></span>
 </p> 
