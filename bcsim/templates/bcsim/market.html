@@ -12,6 +12,7 @@
     <div class="col-12 col-lg-4">
         <h4>Mine tokens</h4>
         <div class="table-responsive mb-5">
+            {% if my_tokens.count > 0  %}
             <table class="table table-sm table-striped text-center">
                 <thead>
                     <tr>
@@ -20,16 +21,15 @@
                         <th></th>
                     </tr>
                 </thead>
-                {% if my_tokens.count > 0  %}
                     <tbody>
                     {% for token in my_tokens %}
                         {% if token.owner == miner %}                        
                             <tr>
                                 <td>{{ token.small_svg|safe}}</td>
                                     {% if token.price %}
-                                    <td class="align-middle">    
-                                        {{ token.price }}
-                                    </td>
+                                        <td class="align-middle">    
+                                            {{ token.price }}
+                                        </td>
                                     {% else %}
                                     <td class="align-middle">
                                         <form class="pl-3" action="{% url 'bcsim:market' %}" method="POST" id="price_form_{{ token.id }}">
@@ -49,10 +49,10 @@
                         {% endif %}
                     {% endfor %}
                     </tbody>
-                {% else %}
-                    <i>Du har pt. ingen tokens </i>
-                {% endif %}
             </table>
+            {% else %}
+                <i>Du har pt. ingen tokens </i>
+            {% endif %}
         </div>
     </div>
     <div class="col-0 col-lg-1"></div>
@@ -75,7 +75,13 @@
                         <tr>
                             <td>&nbsp&nbsp{{ token.small_svg|safe}}</td>
                             <td class="align-middle">{{ token.owner }}</td>
-                            <td class="align-middle">{{ token.price }}</td>
+                            <td class="align-middle">
+                                {% if token.price %}
+                                    {{ token.price }}
+                                {% else %}
+                                    Ingen
+                                {% endif %}
+                            </td>
                             <td class="align-middle">
                                 {% if token|miner_can_buy:miner %}
                                     <form action="{% url 'bcsim:buy_token' %}" method="POST">

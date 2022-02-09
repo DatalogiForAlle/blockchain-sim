@@ -363,8 +363,7 @@ def mine_view(request):
 
                 # We want miners to check hashes before trying to add blocks to chain.
                 # Therefore we make a little time delay here
-                time_delay_in_seconds = 2
-                time.sleep(time_delay_in_seconds)
+                time.sleep(blockchain.ADD_TO_CHAIN_TIME_DELAY_IN_SECONDS)
 
                 if not hash_is_valid:
                     messages.error(
