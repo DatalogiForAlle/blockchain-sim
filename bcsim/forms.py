@@ -125,14 +125,14 @@ class LoginForm(forms.Form):
 
 
 class TokenPriceForm(forms.Form):
-    price = forms.IntegerField(label="Pris")
+    price = forms.IntegerField(widget=forms.NumberInput(attrs={'style': ''}), label = "")
 
     def clean_price(self):
-        max_price = 10**6
+        max_price = 9999
         price = self.cleaned_data['price']
         if price < 1:
             raise forms.ValidationError(
-                'Prisen skal være mindst 1.')
+                'Prisen skal være mindst 1')
         elif price > max_price:
             raise forms.ValidationError(
                 f'Prisen kan ikke være større end {max_price}')

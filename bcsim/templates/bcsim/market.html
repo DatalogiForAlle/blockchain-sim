@@ -9,53 +9,74 @@
 {% include 'bcsim/page_header.html' %}
 
 <div class="row mt-5">
-    <div class="col-4">
-        <h3>Mine tokens</h3>
+    <div class="col-12 col-lg-4">
+        <h4>Mine tokens</h4>
         <div class="table-responsive mb-5">
-            <table class="table table-sm table-striped">
+            <table class="table table-sm table-striped text-center">
+                <thead>
+                    <tr>
+                        <th>Token</th>
+                        <th>Pris</th>
+                        <th></th>
+                    </tr>
+                </thead>
                 {% if my_tokens.count > 0  %}
+                    <tbody>
                     {% for token in my_tokens %}
-                        {% if token.owner == miner %}
-                            <div class="d-flex">
-                                <div class="mr-2">{{ token.small_svg|safe}}&nbsp&nbsp</div>
-                                {% if token.price %}
-                                    {{ token.price }}
-                                {% else %}
-                                    <form action="{% url 'bcsim:market' %}" method="POST">
-                                        {% csrf_token %}
-                                        {{ forms|get_item:token.id|crispy }}
-                                        <input type="hidden" name="token_id" value="{{ token.id }}">
-                                        <button class="btn btn-secondary">Sæt til salg</button>
-                                    </form> 
-                                {% endif %}
-                            </div>
+                        {% if token.owner == miner %}                        
+                            <tr>
+                                <td>{{ token.small_svg|safe}}</td>
+                                    {% if token.price %}
+                                    <td class="align-middle">    
+                                        {{ token.price }}
+                                    </td>
+                                    {% else %}
+                                    <td class="align-middle">
+                                        <form class="pl-3" action="{% url 'bcsim:market' %}" method="POST" id="price_form_{{ token.id }}">
+                                            {% csrf_token %}
+                                            {{ forms|get_item:token.id|crispy }}
+                                            <input type="hidden" name="token_id" value="{{ token.id }}">
+                                        </form> 
+                                    </td>
+                                    {% endif %}
+                                </td>
+                                <td class="mt-2">
+                                    {% if not token.price %}
+                                        <button class="btn btn-secondary text-nowrap" type="submit" form="price_form_{{ token.id }}">Sæt til salg</button>
+                                    {% endif %}
+                                </td>
+                            </tr>
                         {% endif %}
                     {% endfor %}
+                    </tbody>
                 {% else %}
                     <i>Du har pt. ingen tokens </i>
                 {% endif %}
             </table>
         </div>
     </div>
-    <div class="col-8">
-        <h3>Køb tokens </h3>
+    <div class="col-0 col-lg-1"></div>
+
+    <div class="col-12 col-lg-7">
+        <h4>Køb tokens</h4>
         <div class="table-responsive">
             <table class="table table-sm table-striped" >
                 <thead>
                     <tr>
                         <th>Token</th>
-                        <th>Ejer</th>
+                        <th>Sælger</th>
                         <th>Pris</th>
                         <th>Køb</th>
                     </tr>
                 </thead>
+                <tbody>
                 {% for token in tokens %}
                     {% if not token.in_queue_for_initial_transaction %}
                         <tr>
                             <td>&nbsp&nbsp{{ token.small_svg|safe}}</td>
-                            <td>{{ token.owner }}</td>
-                            <td>{{ token.price }}</td>
-                            <td>
+                            <td class="align-middle">{{ token.owner }}</td>
+                            <td class="align-middle">{{ token.price }}</td>
+                            <td class="align-middle">
                                 {% if token|miner_can_buy:miner %}
                                     <form action="{% url 'bcsim:buy_token' %}" method="POST">
                                         {% csrf_token %}
@@ -70,6 +91,7 @@
                         </tr>
                     {% endif %}
                 {% endfor %}
+                </tbody>
             </table>
         </div>
     </div>

@@ -24,11 +24,11 @@ class Blockchain(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_paused = models.BooleanField(default=False)
     
-    # Class constans 
+    # Class constants 
     MINER_REWARD = 100
     BANK_TOKEN_PRICE = 150
     NUM_INITIAL_TRANSACTIONS_PR_MINER = 2
-    NUM_TOKENS_FOR_SALE_IN_BANK = 3
+    NUM_TOKENS_FOR_SALE_IN_BANK_AT_ALL_TIMES = 3
 
     class Type(models.IntegerChoices):
         HAS_NO_TOKENS = 1, ('Uden NFT-marked')
@@ -163,9 +163,7 @@ class Miner(models.Model):
         return f"{self.name}"
 
     def save(self, *args, **kwargs):
-        """
-        Set unique custom id for miner before creating a new blockchain object
-        """
+        """ Set unique id and miner_num for miner before creating a new miner object """
         if not self.id:
             # we are creating a new miner (not updating an existing miner)
             self.id = new_unique_miner_id()
@@ -322,20 +320,16 @@ class Transaction(models.Model):
 
     def is_valid(self):
 
-        # Buyer has enough money
         if not self.buyer.balance >= self.amount:
             return False, "Køberen har ikke penge nok"
 
-        # Seller owns the token
         if not self.token.owner == self.seller:
             return False, "Sælgeren ejer ikke længere tokenet"
 
-        # Token er til salg
         if not self.token.in_queue_for_initial_transaction():
             if not self.token.price:
                 return False, "Tokenet er ikke til salg"
 
-        # Transaction is in proces
         if self.processed: 
             return False, "Transaktionen er allerede behandlet"
 
