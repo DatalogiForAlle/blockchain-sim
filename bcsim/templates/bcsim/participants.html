@@ -5,9 +5,9 @@
 
 {% block content %}
 
-<h4 class="mb-4"><span class="text-black-50">Blockchain [{{ blockchain.id }}]</span>: {{ blockchain.title }}</h4>      
+{% include 'bcsim/page_header.html' %}
 
-<h5>Minearbejdere</h5>
+<h5 class="mt-5">Minearbejdere</h5>
 <div class="table-responsive">
     <table class="table mb-5" id="trader_status_table"> 
         <thead>

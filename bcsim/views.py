@@ -71,6 +71,7 @@ def market_view(request):
 
     tokens = Token.objects.filter(
         blockchain=miner.blockchain).order_by('-price')
+    my_tokens = tokens.filter(owner=miner)
     token_price_forms = {str(token.id): TokenPriceForm() for token in tokens}
 
     if request.method == 'POST':
@@ -94,9 +95,11 @@ def market_view(request):
 
     context = {
         'tokens': tokens,
+        'my_tokens':my_tokens,
         'miner': miner,
         'blockchain': miner.blockchain,
-        'forms': token_price_forms
+        'forms': token_price_forms,
+        'page_title': 'Markedsplads'
     }
 
     return render(request, 'bcsim/market.html', context)
@@ -108,7 +111,7 @@ def invite_view(request):
     miner_id = request.session['miner_id']
     miner = get_object_or_404(Miner, pk=miner_id)
 
-    context = {'blockchain': miner.blockchain, 'miner': miner}
+    context = {'blockchain': miner.blockchain, 'miner': miner, 'page_title': 'Inviter'}
     return render(request, 'bcsim/invite.html', context)
 
 
@@ -119,8 +122,12 @@ def participants_view(request):
     miner = get_object_or_404(Miner, pk=miner_id)
     miners = Miner.objects.filter(
         blockchain=miner.blockchain).order_by('-balance')
-    context = {'miners': miners,
-               'blockchain': miner.blockchain, 'client': miner}
+    context = {
+            'miner':miner,
+            'miners': miners,
+            'blockchain': miner.blockchain, 
+            'client': miner,
+            'page_title': 'Deltagere'}
     return render(request, 'bcsim/participants.html', context)
 
 
@@ -264,7 +271,8 @@ def home_view(request):
     context = {
         'create_form': create_form,
         'join_form': join_form,
-        'login_form': login_form
+        'login_form': login_form,
+        'page_title': 'Min bruger'
     }
 
     if 'miner_id' in request.session:
@@ -357,13 +365,15 @@ def mine_view(request):
                 if not hash_is_valid:
                     messages.error(
                         request,
-                        f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
+                        f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num})")
                 else:
+                    success_mgs = f"Blok #{current_block_num} føjet til     blockchain (belønning +{blockchain.MINER_REWARD} DIKU-coins)"
+                    
                     if not blockchain.has_tokens():
                         potential_next_block.save()
                         miner.add_miner_reward()
                         messages.success(
-                            request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
+                            request, success_mgs)
 
                     elif blockchain.has_tokens():
                         transaction_is_valid, error_message = next_transaction.process(
@@ -372,9 +382,8 @@ def mine_view(request):
                             unprocessed_transactions = Transaction.objects.filter(
                                 blockchain=blockchain, processed=False)
                             potential_next_block.save()
-
                             messages.success(
-                                request, f"Du har tilføjet blok #{current_block_num} til blockchainen!")
+                                request, success_mgs)
                         else:
                             messages.info(
                                 request, f"Transaktionen er ugyldig!: {error_message}")
@@ -388,7 +397,8 @@ def mine_view(request):
         'form': form,
         'cur_hash': hash,
         'next_block': potential_next_block,
-        'unprocessed_transactions': unprocessed_transactions
+        'unprocessed_transactions': unprocessed_transactions,
+        'page_title':'Minedrift'
     }
 
     if miner.number_of_last_block_seen < current_block_num:

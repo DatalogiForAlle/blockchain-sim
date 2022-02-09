@@ -125,7 +125,7 @@ class LoginForm(forms.Form):
 
 
 class TokenPriceForm(forms.Form):
-    price = forms.IntegerField()
+    price = forms.IntegerField(label="Pris")
 
     def clean_price(self):
         max_price = 10**6

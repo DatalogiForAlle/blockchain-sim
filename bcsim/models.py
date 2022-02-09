@@ -202,6 +202,9 @@ class Miner(models.Model):
             return False
         return True
 
+    def number_of_tokens(self):
+        return Token.objects.filter(owner=self).count()
+
     def color(self):
         """
         Get the unique color identifying the miner in question. 
