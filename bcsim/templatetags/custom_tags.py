@@ -17,10 +17,10 @@ def miner_can_buy(token, miner):
 def reason_miner_cannot_buy(token, miner):
     if token.in_queue_for_initial_transaction():
         return 'Har ingen ejer endnu'
-    elif not token.price:
-        return 'Ikke sat til salg'
     elif token.owner == miner:
         return 'Din egen token'
+    elif not token.price:
+        return 'Ikke til salg'
     elif token.transaction_in_process:
         return 'Handel i proces'
     elif token.price > miner.balance:

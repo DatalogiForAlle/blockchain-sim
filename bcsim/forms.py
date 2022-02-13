@@ -135,6 +135,6 @@ class TokenPriceForm(forms.Form):
                 'Prisen skal være mindst 1')
         elif price > max_price:
             raise forms.ValidationError(
-                f'Prisen kan ikke være større end {max_price}')
+                f'Prisen kan ikke være højere end {max_price}')
 
         return price

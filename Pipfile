@@ -10,6 +10,7 @@ Django = "~=3.2"
 factory-boy = "*"
 pycodestyle = "*"
 autopep8 = "*"
+requests = "*"
 
 [dev-packages]
 pytest = "*"
