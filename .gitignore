@@ -6,3 +6,4 @@ __pycache__/
 .env.prod
 /static/
 bot_library
+mining_bot/mining_bot_ver2.py

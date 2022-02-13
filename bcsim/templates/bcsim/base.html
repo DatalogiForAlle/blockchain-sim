@@ -40,7 +40,6 @@
                     </div>
                 </nav>
                 
-                <!-- Page content-->
                 <main class="container mt-4 mt-lg-5">
 
                     <!-- Potential messages -->
@@ -51,7 +50,11 @@
                             </div>
                         {% endfor %}
                     {% endif %}
+
+                    <!-- Page content--> 
                     {% block content %}  {% endblock %}
+                    
+                    <!-- Minimal white space above footer -->
                     <div class="mb-5 mt-5">&nbsp</div>
                 </main>          
         

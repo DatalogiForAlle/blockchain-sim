@@ -60,7 +60,7 @@
     <div class="col-12 col-lg-7">
         <h4>Køb tokens</h4>
         <div class="table-responsive">
-            <table class="table table-sm table-striped" >
+            <table class="table table-sm table-striped text-center">
                 <thead>
                     <tr>
                         <th>Token</th>
@@ -73,13 +73,13 @@
                 {% for token in tokens %}
                     {% if not token.in_queue_for_initial_transaction %}
                         <tr>
-                            <td>&nbsp&nbsp{{ token.small_svg|safe}}</td>
+                            <td>{{ token.small_svg|safe}}</td>
                             <td class="align-middle">{{ token.owner }}</td>
                             <td class="align-middle">
                                 {% if token.price %}
                                     {{ token.price }}
                                 {% else %}
-                                    Ingen
+                                    &#8212;
                                 {% endif %}
                             </td>
                             <td class="align-middle">

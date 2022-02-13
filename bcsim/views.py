@@ -368,9 +368,9 @@ def mine_view(request):
                 if not hash_is_valid:
                     messages.error(
                         request,
-                        f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num})")
+                        f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
                 else:
-                    success_mgs = f"Blok #{current_block_num} føjet til     blockchain (belønning +{blockchain.MINER_REWARD} DIKU-coins)"
+                    success_mgs = f"Blok #{current_block_num} føjet til blockchain (belønning +{blockchain.MINER_REWARD} DIKU-coins)"
                     
                     if not blockchain.has_tokens():
                         potential_next_block.save()
