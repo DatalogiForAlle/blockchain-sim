@@ -361,14 +361,14 @@ def mine_view(request):
 
             if 'add_to_chain' in request.POST:
 
-                # We want miners to check hashes before trying to add blocks to chain.
-                # Therefore we make a little time delay here
-                time.sleep(blockchain.ADD_TO_CHAIN_TIME_DELAY_IN_SECONDS)
-
                 if not hash_is_valid:
+                    # We want miners to check hashes before trying to add blocks to chain.
+                    # Therefore we make a little time delay here
+                    time.sleep(blockchain.ADD_TO_CHAIN_TIME_DELAY_IN_SECONDS)
+
                     messages.error(
                         request,
-                        f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}...{hash}")
+                        f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
                 else:
                     success_mgs = f"Blok #{current_block_num} føjet til blockchain (belønning +{blockchain.MINER_REWARD} DIKU-coins)"
                     
@@ -390,6 +390,11 @@ def mine_view(request):
                         else:
                             messages.info(
                                 request, f"Transaktionen er ugyldig!: {error_message}")
+
+                    # We want miners to check hashes before trying to add blocks to chain.
+                    # Therefore we make a little time delay here
+                    # NB: This sleep should happen AFTER potentially saving block
+                    time.sleep(blockchain.ADD_TO_CHAIN_TIME_DELAY_IN_SECONDS)
 
                     return redirect(reverse('bcsim:mine'))
 
