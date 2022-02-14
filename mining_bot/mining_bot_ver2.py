@@ -14,6 +14,10 @@ def get_csrf_token(html):
     return match[1]
 
 
+def no_transactions_to_mine(html):
+    return re.search(r"ingen transaktioner", html)
+
+
 def get_miner_id(html):
     match = re.search(r'minearbejder-ID = ([a-z0-9]{8})', html)
     if not match:
@@ -23,8 +27,6 @@ def get_miner_id(html):
 
 def get_hash_rules(html):
     if re.search(r"Gyldige hashes starter med 0 eller 1", html): 
-        print("EASY!!")   
-        print(html)
         return ['0', '1']
 
     if re.search(r"Gyldige hashes starter med 00", html):
@@ -62,7 +64,8 @@ def get_hash(html):
         if re.search(r"før dig!", html):
             return "Hash was not calculated (block already claimed by another miner)"
         else: 
-            raise ValueError("Unable to extract hash")
+            return "Unable to extract hash"
+            #raise ValueError("Unable to extract hash")
     else: 
         return match[1]
 
@@ -168,6 +171,11 @@ class Bot():
                     'calculate_hash': 'submit'}
 
             response = self.session.post(self.base_url + "/minedrift/", data=data)
+
+            if no_transactions_to_mine(response.text):
+                print(f"  {self.name}: No transactions to mine")
+                time.sleep(3)
+                continue 
 
             hash_ = get_hash(response.text)
             print(f"  {self.name}: Got hash: {hash_}")
