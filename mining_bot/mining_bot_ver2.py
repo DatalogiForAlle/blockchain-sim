@@ -22,7 +22,9 @@ def get_miner_id(html):
 
 
 def get_hash_rules(html):
-    if re.search(r"Gyldige hashes starter med 0 eller 1", html):    
+    if re.search(r"Gyldige hashes starter med 0 eller 1", html): 
+        print("EASY!!")   
+        print(html)
         return ['0', '1']
 
     if re.search(r"Gyldige hashes starter med 00", html):
@@ -137,10 +139,13 @@ class Bot():
         print(f"  Mining bot with name '{self.name}' and miner-id {self.miner_id} joined blochchain {self.blockchain_id}")
   
     def simulate_human_time_delay(self):
-        tiny_random_delay = random.uniform(0.3, 1)
+        tiny_random_delay = random.uniform(0.4, 2)
         time.sleep(tiny_random_delay)
 
     def start_mining(self):
+
+        self.simulate_human_time_delay()
+
         while True:
             nonce = random.randint(0, 1000)
 
@@ -218,9 +223,10 @@ class Controller():
             self.base_url = "http://127.0.0.1:8000"
             
     def set_start_chars(self):
-        session = requests.Session()
-        response = session.get(self.base_url + "/minedrift")
-        self.start_chars = get_hash_rules(response.text)        
+        helper_bot = Bot("inactive-helper-bot", self)
+        helper_bot.join_blockchain()
+        response = helper_bot.session.get(self.base_url + "/minedrift")
+        self.start_chars = get_hash_rules(response.text)  
         print(f"  Valid hashes begin with: {self.start_chars}")
 
 
@@ -235,7 +241,6 @@ class Controller():
             bot_name = f"{self.bot_name}{i}" 
             t = Thread(target=self.start_bot, args=(bot_name,))
             t.start()
-            time.sleep(0.1)
 
 
 if __name__ == '__main__':

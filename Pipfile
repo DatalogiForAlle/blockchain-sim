@@ -11,6 +11,7 @@ factory-boy = "*"
 pycodestyle = "*"
 autopep8 = "*"
 requests = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 pytest = "*"
