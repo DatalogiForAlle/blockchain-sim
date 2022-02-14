@@ -12,6 +12,8 @@ services:
       - 8005
     env_file:
       - ./.env.prod
+    depends_on:
+      - db
     networks:
       - reverseproxy_proxynet
 
@@ -34,6 +36,19 @@ services:
       - LETSENCRYPT_HOST=blockchain-sim.dataekspeditioner.dk
       - LETSENCRYPT_EMAIL=dybber@di.ku.dk
       - url=https://blockchain-sim.dataekspeditioner.dk.dk
+    networks:
+      - reverseproxy_proxynet
+
+  db:
+    image: postgres:14
+    restart: always
+    volumes:
+     - database_volume:/var/lib/postgresql/data/
+    environment:
+     - "POSTGRES_HOST_AUTH_METHOD=trust"
+    env_file:
+      - .env.prod
+    user: postgres:postgres
     networks:
       - reverseproxy_proxynet
 
