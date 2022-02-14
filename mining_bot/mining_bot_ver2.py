@@ -30,7 +30,7 @@ def get_hash_rules(html):
     if re.search(r"Gyldige hashes starter med 00", html):
         return ['00']
 
-    if re.search(r"Gyldige hashes starter med 0 ", html):
+    if re.search(r"Gyldige hashes starter med 0", html):
         return ['0']
 
     raise ValueError("Unable to extract valid start characters (hash rules)")
