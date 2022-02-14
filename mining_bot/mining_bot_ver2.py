@@ -1,7 +1,3 @@
-"""
-Currently only working when blockchain is in easy-mode
-"""
-
 import os
 import requests
 import re
