@@ -283,6 +283,7 @@ def home_view(request):
         try:
             miner = Miner.objects.get(id=request.session['miner_id'])
         except:
+            print("Logging out client")
             return redirect(reverse('bcsim:logout'))
         else:
             context['miner'] = miner
