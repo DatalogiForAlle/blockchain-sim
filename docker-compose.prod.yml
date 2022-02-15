@@ -50,6 +50,8 @@ services:
     user: postgres:postgres
     networks:
       - reverseproxy_proxynet
+    ports:
+    - "5433:5432"
 
 volumes:
   database_volume: {}
