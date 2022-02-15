@@ -15,7 +15,7 @@ def get_csrf_token(html):
 
 
 def no_transactions_to_mine(html):
-    return re.search(r"ingen transaktioner", html)
+    return re.search(r"Der er ingen transaktioner", html)
 
 
 def get_miner_id(html):
@@ -187,8 +187,8 @@ class Bot():
                 print(f"  {self.name}: Valid hash!")
 
                 data = {'csrfmiddlewaretoken': get_csrf_token(response.text),
-                        'nonce': str(nonce),
-                        'add_to_chain': 'true'}
+                        'nonce': str(nonce)}
+
                 response = self.session.post(self.base_url + "/minedrift/", data=data)
 
                 if block_added_success(response.text):

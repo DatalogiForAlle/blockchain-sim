@@ -3,7 +3,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib import messages
-from django.http import HttpResponse
 from .models import Blockchain, Block, Miner, Token, Transaction
 from .forms import (BlockchainForm, JoinForm, BlockForm,
                     LoginForm, TokenPriceForm)
@@ -334,7 +333,9 @@ def mine_view(request):
             nonce=None,
             transaction=next_transaction)
 
+
     if request.method == "POST":
+        # Miner is trying to add a block to the blockchain
 
         if blockchain.is_paused:
             return redirect(reverse('bcsim:mine'))
@@ -348,6 +349,7 @@ def mine_view(request):
         form = BlockForm(request.POST)
 
         if form.is_valid():
+
             if miner.missed_last_block():
                 messages.error(
                     request,
@@ -360,44 +362,62 @@ def mine_view(request):
 
             hash, hash_is_valid = potential_next_block.hash_is_valid()
 
-            if 'add_to_chain' in request.POST:
+            if not hash_is_valid:
+                # We want miners to check hashes before trying to add blocks to chain.
+                # Therefore we make a little time delay here
+                time.sleep(blockchain.ADD_TO_CHAIN_TIME_DELAY_IN_SECONDS)
 
-                if not hash_is_valid:
-                    # We want miners to check hashes before trying to add blocks to chain.
-                    # Therefore we make a little time delay here
-                    time.sleep(blockchain.ADD_TO_CHAIN_TIME_DELAY_IN_SECONDS)
+                messages.error(
+                    request,
+                    f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
+            else:
+                success_mgs = f"Blok #{current_block_num} føjet til blockchain (belønning +{blockchain.MINER_REWARD} DIKU-coins)"
+                
+                if not blockchain.has_tokens():
+                    potential_next_block.save()
+                    miner.add_miner_reward()
+                    messages.success(
+                        request, success_mgs)
 
-                    messages.error(
-                        request,
-                        f"Fejl: Nonce {nonce} ikke gyldigt proof-of-work for blok #{current_block_num}")
-                else:
-                    success_mgs = f"Blok #{current_block_num} føjet til blockchain (belønning +{blockchain.MINER_REWARD} DIKU-coins)"
-                    
-                    if not blockchain.has_tokens():
+                elif blockchain.has_tokens():
+                    transaction_is_valid, error_message = next_transaction.process(
+                        miner)
+                    if transaction_is_valid:
+                        unprocessed_transactions = Transaction.objects.filter(
+                            blockchain=blockchain, processed=False)
                         potential_next_block.save()
-                        miner.add_miner_reward()
                         messages.success(
                             request, success_mgs)
+                    else:
+                        messages.info(
+                            request, f"Transaktionen er ugyldig!: {error_message}")
 
-                    elif blockchain.has_tokens():
-                        transaction_is_valid, error_message = next_transaction.process(
-                            miner)
-                        if transaction_is_valid:
-                            unprocessed_transactions = Transaction.objects.filter(
-                                blockchain=blockchain, processed=False)
-                            potential_next_block.save()
-                            messages.success(
-                                request, success_mgs)
-                        else:
-                            messages.info(
-                                request, f"Transaktionen er ugyldig!: {error_message}")
+                # We want miners to check hashes before trying to add blocks to chain.
+                # Therefore we make a little time delay here
+                # NB: This sleep should happen AFTER potentially saving block
+                time.sleep(blockchain.ADD_TO_CHAIN_TIME_DELAY_IN_SECONDS)
 
-                    # We want miners to check hashes before trying to add blocks to chain.
-                    # Therefore we make a little time delay here
-                    # NB: This sleep should happen AFTER potentially saving block
-                    time.sleep(blockchain.ADD_TO_CHAIN_TIME_DELAY_IN_SECONDS)
+                return redirect(reverse('bcsim:mine'))
 
-                    return redirect(reverse('bcsim:mine'))
+    payload_str_for_hash = blockchain.get_payload_str_for_hash()
+    
+    # Payload string for hash:
+    if not blockchain.has_tokens():
+        payload_str_for_hash = potential_next_block.random_payload_str()
+    else: 
+        if next_transaction:
+            payload_str_for_hash = next_transaction.payload_str_for_hash()
+        else: 
+            payload_str_for_hash = None
+
+    # Payload string to show: 
+    if not blockchain.has_tokens():
+        payload_to_show = potential_next_block.random_payload_str()
+    else:
+        if unprocessed_transactions.exists():
+            payload_to_show = unprocessed_transactions.first().payload_str()
+        else: 
+            payload_to_show = ""
 
     context = {
         'blocks': blocks,
@@ -407,7 +427,9 @@ def mine_view(request):
         'cur_hash': hash,
         'next_block': potential_next_block,
         'unprocessed_transactions': unprocessed_transactions,
-        'page_title':'Minedrift'
+        'page_title':'Minedrift',
+        'payload_str_for_hash': payload_str_for_hash,
+        'payload_to_show': payload_to_show
     }
 
     if miner.number_of_last_block_seen < current_block_num:
