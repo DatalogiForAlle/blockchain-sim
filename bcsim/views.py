@@ -399,7 +399,6 @@ def mine_view(request):
 
                 return redirect(reverse('bcsim:mine'))
 
-    payload_str_for_hash = blockchain.get_payload_str_for_hash()
     
     # Payload string for hash:
     if not blockchain.has_tokens():
