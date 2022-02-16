@@ -1,0 +1,23 @@
+{% extends "bcsim/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Minedrift{% endblock %}
+
+
+{% block content %}
+
+{% include 'bcsim/page_header.html' %}
+
+<div class="mt-5 mb-5"></div>
+
+<!-- Column with list of all blocks in blockchain" -->
+<div class="row mt-5">
+    <div class="col-0 col-lg-3"></div>
+    <div class="col-12 col-lg-6">
+        {% include 'bcsim/block_list.html' %}
+    </div>
+    <div class="col-0 col-lg-3"></div>
+</div>
+
+
+{% endblock %}

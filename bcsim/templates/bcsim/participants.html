@@ -7,7 +7,29 @@
 
 {% include 'bcsim/page_header.html' %}
 
-<h5 class="mt-5">Minearbejdere</h5>
+{% include 'bcsim/business_card.html' %}
+
+<div class="row">
+    <div class="col col-12 col-lg-6">
+        <h6>Inviter nye deltagere/hold til denne blockchain</h6>
+        <div class="d-flex mb-4">
+            <input class="form-control rounded-0" type="text" 
+                value="{% if request.is_secure %}https{% else %}http{% endif %}://{{ request.get_host }}{% url 'bcsim:home' %}?blockchain_id={{ blockchain.id }}" id="join_link" style="width:350px">
+            <button class="btn btn-outline-primary btn-sm rounded-0" onclick="copy_link('join_link')">Kopier</button>
+        </div>
+    </div>
+
+    <div class="col col-12 col-lg-6">    
+        <h6>Inviter deltagere til dit hold ("{{ miner.name }}")</h6>
+        <div class="d-flex mb-5">
+            <input class="form-control rounded-0" type="text" 
+                value="{% if request.is_secure %}https{% else %}http{% endif %}://{{ request.get_host }}{% url 'bcsim:home' %}?blockchain_id={{ blockchain.id }}&miner_id={{ miner.id }}" id="join_team_link" style="width:350px">
+            <button class="btn btn-outline-primary btn-sm rounded-0" onclick="copy_link('join_team_link')">Kopier</button>
+        </div>
+    </div>
+</div>
+
+<h5 class="mt-3">Minearbejdere</h5>
 <div class="table-responsive">
     <table class="table mb-5" id="trader_status_table"> 
         <thead>
@@ -54,3 +76,18 @@
 {% endif %}
 
 {% endblock content %}
+
+
+
+{% block javascript %}
+
+<script>
+    function copy_link(id) {
+        var link_text = document.getElementById(id);
+        link_text.select();
+        link_text.setSelectionRange(0, link_text.value.length);
+        document.execCommand("copy")
+    }
+</script>
+
+{% endblock %}

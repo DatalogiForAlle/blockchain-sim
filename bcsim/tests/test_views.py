@@ -183,7 +183,6 @@ def test_mine_view_exists_and_returns_correct_template(client, db):
     assertTemplateUsed(response, 'bcsim/mine.html')
     assert response.context['miner'] == miner
     assert response.context['blockchain'] == block.blockchain
-    assert response.context['blocks'].last() == block
     assert response.context['next_block'].prev_hash == block.hash()
 
 

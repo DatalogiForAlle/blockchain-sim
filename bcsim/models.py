@@ -377,7 +377,10 @@ class Transaction(models.Model):
 
 
     def payload_str(self):
-        """ Payload string to be shown in user interface """
+        """ 
+        Payload string to be shown in user interface 
+        Only used when blockchain has NFt-market
+        """
 
         if self.is_initial_transaction():
             payload = f"{self.token.small_svg()} til <b>{self.buyer.name}</b> fra NFT-banken"
@@ -389,7 +392,10 @@ class Transaction(models.Model):
 
 
     def payload_str_for_hash(self):
-        """ Payload string used when calculating hash of block """
+        """ 
+        Payload string used when calculating hash of block 
+        Only used when blockchain has NFt-market
+        """
         if self.is_initial_transaction():
             payload = f"{self.token.seed} til {self.buyer.name} fra NFT-banken"
 
@@ -417,16 +423,23 @@ class Block(models.Model):
     transaction = models.ForeignKey(
         Transaction, null=True, blank=True, on_delete=models.CASCADE)
 
-    def hash(self):
+    def string_to_be_hashed(self):
+        """ 
+        Generates the string to be hashed
+        Used only in the case of blockchain with no NFT-market 
+        """
         if self.block_num == 0:
             payload_str = 'genesis'
         elif not self.blockchain.has_tokens():
             payload_str = self.random_payload_str()
         else:
             payload_str = self.transaction.payload_str_for_hash()
-            print(payload_str)
         s = f"{self.block_num}{self.miner.name}{self.prev_hash}{payload_str}{self.nonce}"
-        hash = hashlib.sha256(s.encode()).hexdigest()
+        return s
+
+    def hash(self):
+        to_be_encoded = self.string_to_be_hashed()
+        hash = hashlib.sha256(to_be_encoded.encode()).hexdigest()
         return hash
 
     def hash_is_valid(self):
