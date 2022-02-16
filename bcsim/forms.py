@@ -84,17 +84,24 @@ class BlockForm(forms.ModelForm):
             'nonce': 'Nonce:',
         }
 
+    widgets = {
+        'nonce': forms.NumberInput(attrs={'autofocus':True}),
+    }
+
+
     def clean_nonce(self):
         """ Nonce has to be a non-zero positive 32 bit integer """
         nonce = self.cleaned_data['nonce']
         if nonce is None:
             raise forms.ValidationError(
                 'Du skal angive Nonce')
-
-        else:
-            if not 0 <= nonce <= 2**32 - 1:
-                raise forms.ValidationError(
-                    'Nonce skal være et ikke-negativt heltal på max 4294967295 (32-bit)')
+        elif  nonce < 0:
+            raise forms.ValidationError(
+                'Nonce må ikke være mindre end 0')
+        elif nonce > 2**32 - 1:
+            raise forms.ValidationError(
+                'Nonce må ikke være større end 4294967295 (32-bit)')
+ 
         return nonce
 
 

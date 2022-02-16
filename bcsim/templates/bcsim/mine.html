@@ -64,7 +64,7 @@
                         {{ form|crispy }}                       
                     </form>
            
-                    <div class="d-flex justify-content-center">
+                    <div class="d-flex justify-content-center mt-4">
                         <button class="btn btn-outline-primary mr-2" type="button" id="add_to_chain_btn" onclick ="add_to_chain_btn_handler()">
                             Tilføj til blockchain
                         </button>
@@ -72,8 +72,11 @@
                                   id="calculate_hash_btn">
                             Beregn hash
                         </button>
-                        <button class="btn btn-outline-primary mr-4" onclick="plus_one()">
+                        <button class="btn btn-outline-primary mr-2" onclick="plus_one()">
                             +1 
+                        </button>
+                        <button class="btn btn-outline-primary mr-2" onclick="minus_one()">
+                            -1 
                         </button>
                         <button class="btn btn-outline-primary" onclick="reload();">
                             &#x21bb 
@@ -121,7 +124,9 @@
     </div>
 </div> 
 
-{% endblock %}
+
+<form action="" method="GET" id="reload_form"></form>
+{% endblock %} 
 
 
 {% block javascript %}
@@ -141,7 +146,7 @@
 
     function reload(){
         // Perhaps this should only be refresh of mine-card
-        location.reload()
+        document.getElementById("reload_form").submit()
     }
 
     function insertAfter(referenceNode, newNode) {
@@ -202,7 +207,7 @@
             nonce_input.value = -1;
         }
         nonce_input.value = parseInt(nonce_input.value) + 1;
-        //document.getElementById('calculate_hash_btn').click()
+        document.getElementById('calculate_hash_btn').click()
  
     }
     function minus_one(){
@@ -211,6 +216,7 @@
             nonce_input.value = 1;
         }
         nonce_input.value = parseInt(nonce_input.value) - 1; 
+        document.getElementById('calculate_hash_btn').click()
     }
 
     function add_eventlisteners() {
@@ -250,18 +256,6 @@
                !isNaN(parseInt(value, 10));
     }
 
-    function nonceIsValid(value){
-        if(!isInt(value)){
-            return false
-        }
-        else if (value < 0 || value > 4294967295){
-            return false
-        }
-        else {
-            return true
-        }
-    }
-
     function showErrors(){
 
         // Hide div showing calculated hash
@@ -294,15 +288,26 @@
             document.getElementById('js-error-message-text').innerHTML="Der er pt. ingen transaktioner at mine"
             showErrors()
         }
+
         else if (nonce == ""){
             document.getElementById('js-error-message-text').innerHTML="Du skal angive Nonce"
             showErrors()
         }
 
-        else if (!nonceIsValid(nonce)){
-            document.getElementById('js-error-message-text').innerHTML="Nonce skal være et ikke-negativt heltal på max 4294967295 (32-bit)"
+        else if (!isInt(nonce)){
+            document.getElementById('js-error-message-text').innerHTML="Nonce skal være et heltal"
             showErrors()
         }
+
+        else if (nonce < 0){
+            document.getElementById('js-error-message-text').innerHTML="Nonce må ikke være mindre end 0"
+            showErrors()
+        }
+
+        else if (nonce > 4294967295){
+            document.getElementById('js-error-message-text').innerHTML="Nonce må ikke være større end max 4294967295 (32-bit)"
+            showErrors()
+        } 
 
         else{
             // Remove red border around nonce input field    
@@ -317,10 +322,15 @@
 
         }        
     } 
- 
+    function activate_curser_in_nonce_input_field(){
+        document.getElementById("id_nonce").select()
+    }
+
+    activate_curser_in_nonce_input_field()
     add_eventlisteners()
     show_potential_hash_from_backend()
     create_styled_error_message_element()
+ 
     
 </script>
 
