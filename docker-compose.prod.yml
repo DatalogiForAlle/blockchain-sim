@@ -6,13 +6,12 @@ services:
     build: .
     command: /bin/sh -c /code/entrypoint.prod.sh
     volumes:
+      - database_volume:/db/
       - static_volume:/code/static
     expose:
       - 8005
     env_file:
       - ./.env.prod
-    depends_on:
-      - db
     networks:
       - reverseproxy_proxynet
 
@@ -37,22 +36,6 @@ services:
       - url=https://blockchain-sim.dataekspeditioner.dk.dk
     networks:
       - reverseproxy_proxynet
-
-  db:
-    image: postgres:14
-    restart: always
-    volumes:
-     - database_volume:/var/lib/postgresql/data/
-    environment:
-     - "POSTGRES_HOST_AUTH_METHOD=trust"
-    env_file:
-      - .env.prod
-    user: postgres:postgres
-    networks:
-      - reverseproxy_proxynet
-    #ports:
-    #- "5433:5432"
-
 
 volumes:
   database_volume: {}
