@@ -110,16 +110,6 @@ def market_view(request):
 
 @require_GET
 @require_miner_id_is_in_session
-def invite_view(request):
-    miner_id = request.session['miner_id']
-    miner = get_object_or_404(Miner, pk=miner_id)
-
-    context = {'blockchain': miner.blockchain, 'miner': miner, 'page_title': 'Inviter'}
-    return render(request, 'bcsim/invite.html', context)
-
-
-@require_GET
-@require_miner_id_is_in_session
 def participants_view(request):
     miner_id = request.session['miner_id']
     miner = get_object_or_404(Miner, pk=miner_id)
@@ -312,6 +302,8 @@ def toggle_pause_view(request):
     return redirect(reverse('bcsim:mine'))
 
 
+
+
 @require_miner_id_is_in_session
 def mine_view(request):
     miner_id = request.session['miner_id']
@@ -320,7 +312,7 @@ def mine_view(request):
     blocks = Block.objects.filter(
         blockchain=blockchain).order_by('-block_num')
     last_block = blocks.first()
-    current_block_num = len(blocks)
+    current_block_num = last_block.block_num +1
     form = BlockForm()
     hash = None
     unprocessed_transactions, next_transaction = blockchain.get_unprocessed_transactions()
@@ -419,7 +411,7 @@ def mine_view(request):
             payload_to_show = ""
 
     context = {
-        'blocks': blocks,
+        'blocks': blocks[:5],
         'blockchain': blockchain,
         'miner': miner,
         'form': form,
@@ -444,6 +436,27 @@ def block_list_view_htmx(request):
     blockchain_id = request.session['blockchain_id']
     blockchain = Blockchain.objects.get(pk=blockchain_id)
     blocks = Block.objects.filter(
-        blockchain=blockchain).order_by('-block_num')
+        blockchain=blockchain).order_by('-block_num')[:5]
     return render(request, 'bcsim/block_list.html',
                     {'blocks': blocks, 'blockchain': blockchain})
+
+
+@require_GET
+@require_miner_id_is_in_session
+def blockchain_view(request):
+    miner_id = request.session['miner_id']
+    miner = get_object_or_404(Miner, pk=miner_id)
+    blockchain = miner.blockchain
+   
+    blocks = Block.objects.filter(
+        blockchain=blockchain).order_by('-block_num')
+
+    context = {
+            'blocks': blocks, 
+            'blockchain': blockchain,
+            'page_title':'Blockchain',
+            'miner': miner,
+
+    }
+
+    return render(request, 'bcsim/blockchain.html', context)

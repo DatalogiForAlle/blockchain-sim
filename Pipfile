@@ -12,6 +12,7 @@ pycodestyle = "*"
 autopep8 = "*"
 requests = "*"
 psycopg2-binary = "*"
+bs4 = "*"
 
 [dev-packages]
 pytest = "*"

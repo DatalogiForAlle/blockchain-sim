@@ -64,7 +64,7 @@
                         {{ form|crispy }}                       
                     </form>
            
-                    <div class="d-flex justify-content-center"> 
+                    <div class="d-flex justify-content-center">
                         <button class="btn btn-outline-primary mr-2" type="button" id="add_to_chain_btn" onclick ="add_to_chain_btn_handler()">
                             Tilføj til blockchain
                         </button>
@@ -72,9 +72,12 @@
                                   id="calculate_hash_btn">
                             Beregn hash
                         </button>
-                        <button class="btn btn-outline-primary" onclick="plus_one()">
+                        <button class="btn btn-outline-primary mr-4" onclick="plus_one()">
                             +1 
                         </button>
+                        <button class="btn btn-outline-primary" onclick="reload();">
+                            &#x21bb 
+                        </button> 
                     </div>
             </div>
         </div>   
@@ -113,7 +116,7 @@
     <!-- HTMX: Update above list every every x seconds. --> 
     <div 
         hx-get="{% url 'bcsim:block_list' %}"
-        hx-trigger="every 5s"
+        hx-trigger="every 2s"
         hx-target="#block-list">
     </div>
 </div> 
@@ -135,6 +138,11 @@
 {{ cur_hash|json_script:"calculated_hash_from_backend"}}
 
 <script>
+
+    function reload(){
+        // Perhaps this should only be refresh of mine-card
+        location.reload()
+    }
 
     function insertAfter(referenceNode, newNode) {
         referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
@@ -184,6 +192,7 @@
         potential_hash_error_message = document.getElementsByClassName('alert')[0]
         potential_hash_error_message.classList.add("d-none")
         document.getElementById('verification-delay-info').classList.remove('d-none')
+        // submit mine form
         document.getElementById('mine_form').submit()
     }
 
@@ -192,7 +201,9 @@
         if (!nonce_input.value){
             nonce_input.value = -1;
         }
-        nonce_input.value = parseInt(nonce_input.value) + 1; 
+        nonce_input.value = parseInt(nonce_input.value) + 1;
+        //document.getElementById('calculate_hash_btn').click()
+ 
     }
     function minus_one(){
         var nonce_input = document.getElementById("id_nonce");
@@ -226,6 +237,9 @@
                 case 84: // T
                     document.getElementById('add_to_chain_btn').click()
                     break
+                case 82: // R
+                    reload();
+                    break                    
             }
         })
     }
@@ -268,12 +282,20 @@
         const payload_str_for_hash = JSON.parse(document.getElementById('payload_str_for_hash').textContent);
         var nonce = document.getElementById("id_nonce").value
         to_be_hashed = `${block_num}${miner_name}${prev_hash}${payload_str_for_hash}${nonce}`        
-        console.log("To be hashed:", to_be_hashed)
 
         document.getElementById("hash-div").classList.remove("d-none")
 
+        if (document.getElementById("error_1_id_nonce")){
+            document.getElementById('error_1_id_nonce').classList.add("d-none")
+        }
+
+
         if(!payload_str_for_hash){
             document.getElementById('js-error-message-text').innerHTML="Der er pt. ingen transaktioner at mine"
+            showErrors()
+        }
+        else if (nonce == ""){
+            document.getElementById('js-error-message-text').innerHTML="Du skal angive Nonce"
             showErrors()
         }
 
@@ -292,9 +314,10 @@
 
             // Remove error message
             document.getElementById('js-error-message').classList.add("d-none");
-        }        
-    }
 
+        }        
+    } 
+ 
     add_eventlisteners()
     show_potential_hash_from_backend()
     create_styled_error_message_element()

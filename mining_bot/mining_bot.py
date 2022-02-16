@@ -114,7 +114,7 @@ if not os.path.exists('bot_library'):
 
 # New bot joined successfully
 if r.url == base_url + "/minedrift/":
-    r = s.get(base_url + "/inviter")
+    r = s.get(base_url + "/deltagere")
     bot_miner_id = get_miner_id(r.text)
 
     # Save the bot id / miner id to be able to rejoin later

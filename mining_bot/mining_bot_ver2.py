@@ -5,6 +5,24 @@ import time
 import sys
 import random
 from threading import Thread
+from bs4 import BeautifulSoup
+import hashlib
+
+def get_payload_str_for_hash(soup):
+    result = soup.find_all(
+        'script', {'id': 'payload_str_for_hash'})[0].text
+    return result
+
+
+def get_prev_hash(soup):
+    prev_hash = soup.find_all(
+        'script', {'id': 'prev_hash'})[0].text
+    prev_hash = prev_hash.replace('"', '')
+    return prev_hash
+    
+def get_block_num(soup):
+    return soup.find_all(
+        'script', {'id': 'block_num'})[0].text
 
 
 def get_csrf_token(html):
@@ -46,17 +64,6 @@ def sim_is_paused(html):
         return False
 
 
-def get_block_num(html):
-   match = re.search("Blok #([0-9]+)<", html)
-
-   try:
-       block_num = int(match[1])
-   except ValueError:
-       raise ValueError("Unable to extract block id")
-
-   return block_num
-
-
 def get_hash(html):
     match = re.search(
         r"nonce [0-9]+\)<br>\n\s+<small>([0-9a-z]+)</small>", html)
@@ -71,14 +78,25 @@ def get_hash(html):
 
 
 def block_added_success(html):
-    if re.search(r"før dig!", html):
+    if re.search(r"belønning", html):
+        return True
+    else: 
         return False
-    elif re.search(r"belønning", html):
+
+
+def block_claimed_by_another_miner(html):
+    if re.search(r"før dig", html):
         return True
     else:
-        print(html)
-        raise ValueError("Unable to extract block submission status")
+        return False
 
+
+def tried_to_add_invalid_hash(html):
+    if re.search(r"ikke gyldigt proof-of-work", html):
+        return True
+    else:
+        return False
+                    
 
 class Bot():
     def __init__(self, name, controller):
@@ -90,7 +108,8 @@ class Bot():
         self.controller = controller
         self.tries_since_last_win = 0
         self.tries_to_win = []
-       
+         
+
     def join_blockchain(self):
         response = self.session.get(self.base_url)
 
@@ -108,7 +127,7 @@ class Bot():
 
         # New bot joined successfully
         if response.url == self.base_url + "/minedrift/":
-            response = self.session.get(self.base_url + "/inviter")
+            response = self.session.get(self.base_url + "/deltagere")
             self.miner_id = get_miner_id(response.text)
 
             # Save the bot id / miner id to be able to rejoin later
@@ -141,16 +160,34 @@ class Bot():
         
         print(f"  Mining bot with name '{self.name}' and miner-id {self.miner_id} joined blochchain {self.blockchain_id}")
   
+
     def simulate_human_time_delay(self):
         tiny_random_delay = random.uniform(0.4, 2)
         time.sleep(tiny_random_delay)
 
+
+    def calculate_hash(self, html, nonce):
+        soup = BeautifulSoup(html)
+        block_num = get_block_num(soup)
+        payload_str = get_payload_str_for_hash(soup)
+        prev_hash = get_prev_hash(soup)
+        
+        to_be_encoded = f"{block_num}{self.name}{prev_hash}{payload_str}{nonce}"
+        to_be_encoded = to_be_encoded.replace('"', '')
+        hash = hashlib.sha256(to_be_encoded.encode()).hexdigest()
+        
+        return hash
+
+    def hash_is_valid(self, hash):
+        if [x for x in self.controller.start_chars if hash.startswith(x)]:
+            return True
+        else:
+            return False
+
+
     def start_mining(self):
 
-        self.simulate_human_time_delay()
-
         while True:
-            nonce = random.randint(0, 1000)
 
             response = self.session.get(self.base_url + "/minedrift/")
 
@@ -160,54 +197,45 @@ class Bot():
                 time.sleep(3)
                 continue 
 
-            block_num = get_block_num(response.text)
-
-            # Try nonce
-            print(f"  {self.name}: Trying nonce {int(nonce)} on block #{block_num}")
+            # Generate nonce and calculate hash
+            block_num = get_block_num(BeautifulSoup(response.text))
+            nonce = random.randint(0, 1000)
+            hash = self.calculate_hash(response.text, nonce)
             self.tries_since_last_win += 1
+            print(
+                f"  {self.name}: Got hash: {hash[:5]}... when trying nonce {int(nonce)} on block #{block_num}")
 
-            data = {'csrfmiddlewaretoken': get_csrf_token(response.text),
-                    'nonce': str(nonce),
-                    'calculate_hash': 'submit'}
-
-            response = self.session.post(self.base_url + "/minedrift/", data=data)
-
-            if no_transactions_to_mine(response.text):
-                print(f"  {self.name}: No transactions to mine")
-                time.sleep(3)
-                continue 
-
-            hash_ = get_hash(response.text)
-            print(f"  {self.name}: Got hash: {hash_}")
-
-
-            # Determine if the hash is valid
-            self.simulate_human_time_delay()
-            if [x for x in self.controller.start_chars if hash_.startswith(x)]:
-                print(f"  {self.name}: Valid hash!")
+            # We want bots to try to add block to chain when hash is valid and in some other random cases 
+            chance = random.uniform(0, 1) < 0.20
+            if self.hash_is_valid(hash) or chance:
+                print(f"  {self.name}: Valid hash! Trying to add block to chain")
 
                 data = {'csrfmiddlewaretoken': get_csrf_token(response.text),
                         'nonce': str(nonce)}
-
                 response = self.session.post(self.base_url + "/minedrift/", data=data)
 
                 if block_added_success(response.text):
-                    print(f"  {self.name}: Won block {block_num}")
                     self.tries_to_win.append(self.tries_since_last_win)
                     tries_avg = sum(self.tries_to_win)/len(self.tries_to_win)
                     print(
-                        f"  {self.name}: Tries to win: {self.tries_to_win} (avg. {tries_avg:.1f})")
+                        f"  {self.name}: Won block {block_num}. Tries to win: {self.tries_to_win} (avg. {tries_avg:.1f})")
                     self.tries_since_last_win = 0
 
-                else:
+                elif block_claimed_by_another_miner(response.text):
+                    print(f"  {self.name}: Lost block {block_num}, another miner claimed it first!")
+
+                elif tried_to_add_invalid_hash(response.text):
                     print(
-                        f"  {self.name}: Lost block {block_num}, another miner claimed it first!")
+                        f"  {self.name}: Error:Tried to add block {block_num} with invalid hash")
+
+                else: 
+                    print(response.text)
+                    raise ValueError("Unable to extract submission status")
 
             nonce += 1
             
             self.simulate_human_time_delay()
-
-        
+ 
 
 class Controller():
 
@@ -237,7 +265,7 @@ class Controller():
         self.start_chars = get_hash_rules(response.text)  
         print(f"  Valid hashes begin with: {self.start_chars}")
 
-
+        
     def start_bot(self, name):
         bot = Bot(name, self)
         bot.join_blockchain()
