@@ -149,9 +149,11 @@
         document.getElementById("reload_form").submit()
     }
 
+
     function insertAfter(referenceNode, newNode) {
         referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
     }
+
 
     function create_styled_error_message_element(){
         /*
@@ -207,7 +209,7 @@
             nonce_input.value = -1;
         }
         nonce_input.value = parseInt(nonce_input.value) + 1;
-        document.getElementById('calculate_hash_btn').click()
+        //document.getElementById('calculate_hash_btn').click()
  
     }
     function minus_one(){
@@ -216,7 +218,7 @@
             nonce_input.value = 1;
         }
         nonce_input.value = parseInt(nonce_input.value) - 1; 
-        document.getElementById('calculate_hash_btn').click()
+        //document.getElementById('calculate_hash_btn').click()
     }
 
     function add_eventlisteners() {
@@ -230,6 +232,7 @@
         ); 
         // Eventlisteners for arrow keys 
         document.addEventListener('keydown', event => {
+            console.log(event.keyCode)
             switch(event.keyCode){
                 case 38: // up arrow
                     plus_one();
@@ -237,15 +240,26 @@
                 case 40: // down arrow
                     minus_one();
                     break
+                case 39: // right arrow 
+                    reload();
+                    break
+
+                case 82: // R
+                    reload();
+                break                    
+
+                case 37: // left arrow 
+                    document.getElementById('calculate_hash_btn').click()
+                    break
                 case 66: // B
                     document.getElementById('calculate_hash_btn').click()
+                    break                
+                case 16: // shift
+                    document.getElementById('add_to_chain_btn').click()
                     break
                 case 84: // T
                     document.getElementById('add_to_chain_btn').click()
                     break
-                case 82: // R
-                    reload();
-                    break                    
             }
         })
     }
