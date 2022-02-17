@@ -206,11 +206,11 @@ class Bot():
                 f"  {self.name}: Got hash: {hash[:5]}... when trying nonce {int(nonce)} on block #{block_num}")
 
             # We want bots to try to add block to chain when hash is valid and in some other random cases 
-            by_chance = random.uniform(0, 1) < 0.10
+            submit_by_chance = random.uniform(0, 1) < 0.10
             valid_hash = self.hash_is_valid(hash)
 
-            if valid_hash or by_chance:
-                if by_chance:
+            if valid_hash or submit_by_chance:
+                if submit_by_chance:
                     print(
                         f"  {self.name}: Trying to add block to chain - by chance..")
                 if valid_hash:  
@@ -322,7 +322,6 @@ def main():
 
     app = App(command_line_parameters)
     app.start_bots()
-
 
 
 if __name__ == '__main__':

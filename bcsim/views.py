@@ -222,14 +222,8 @@ def home_view(request):
                     # Add initial tokens to NFT-bank
                     new_blockchain.add_token_to_bank(number_of_tokens_to_add=Blockchain.NUM_TOKENS_FOR_SALE_IN_BANK_AT_ALL_TIMES)
   
-                # create initial block in chain
-                Block.objects.create(
-                    block_num=0,
-                    blockchain=new_blockchain,
-                    miner=creator,
-                    nonce="0",
-                    prev_hash="0"
-                )
+                new_blockchain.create_genesis_block(creator)
+
                 messages.success(request, f"Du har startet en ny blockchain!")
 
                 # Create initial transactions for creator

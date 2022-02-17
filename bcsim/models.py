@@ -1,3 +1,4 @@
+from ssl import HAS_NEVER_CHECK_COMMON_NAME
 from django.db import models
 import secrets
 import hashlib
@@ -138,6 +139,25 @@ class Blockchain(models.Model):
             next_transaction = None
         return unprocessed_transactions, next_transaction
 
+    def create_genesis_block(self, creator):
+        
+        genesis_hash_is_valid = False
+        nonce = 0
+
+        while not genesis_hash_is_valid:
+
+            block = Block(
+                block_num=0,
+                blockchain=self,
+                miner=creator,
+                nonce=str(nonce),
+                prev_hash="—"
+            )
+            _, genesis_hash_is_valid = block.hash_is_valid()
+
+            nonce += 1
+
+        block.save()
 
 def new_unique_miner_id():
     """
@@ -429,7 +449,7 @@ class Block(models.Model):
         Used only in the case of blockchain with no NFT-market 
         """
         if self.block_num == 0:
-            payload_str = 'genesis'
+            payload_str = 'Genesis'
         elif not self.blockchain.has_tokens():
             payload_str = self.random_payload_str()
         else:
