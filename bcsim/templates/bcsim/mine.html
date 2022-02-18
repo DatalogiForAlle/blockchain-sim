@@ -59,29 +59,29 @@
                 <p class="pb-1 mb-1">
                     Payload: {{ payload_to_show|safe }}
                 </p>
-                    <form action="{% url 'bcsim:mine' %}" method="post" id="mine_form" novalidate>
-                        {% csrf_token %}
-                        {{ form|crispy }}                       
-                    </form>
-           
-                    <div class="d-flex justify-content-center mt-4">
-                        <button class="btn btn-outline-primary mr-2" type="button" id="add_to_chain_btn" onclick ="add_to_chain_btn_handler()">
-                            Tilføj til blockchain
-                        </button>
-                        <button class="btn btn-outline-primary mr-2" type="button" onclick="calculate_hash()"
-                                  id="calculate_hash_btn">
-                            Beregn hash
-                        </button>
-                        <button class="btn btn-outline-primary mr-2" onclick="plus_one()">
-                            +1 
-                        </button>
-                        <button class="btn btn-outline-primary mr-2" onclick="minus_one()">
-                            -1 
-                        </button>
-                        <button class="btn btn-outline-primary" onclick="reload();">
-                            &#x21bb 
-                        </button> 
-                    </div>
+                <form action="{% url 'bcsim:mine' %}" method="post" id="mine_form" novalidate autocomplete="off">
+                    {% csrf_token %}
+                    {{ form|crispy }}                       
+                </form>
+        
+                <div class="d-flex justify-content-center mt-4">
+                    <button class="btn btn-outline-primary mr-2" type="button" id="add_to_chain_btn" onclick ="add_to_chain_btn_handler()">
+                        Tilføj til blockchain
+                    </button>
+                    <button class="btn btn-outline-primary mr-2" type="button" onclick="calculate_hash()"
+                                id="calculate_hash_btn">
+                        Beregn hash
+                    </button>
+                    <button class="btn btn-outline-primary mr-2" onclick="plus_one()">
+                        +1 
+                    </button>
+                    <button class="btn btn-outline-primary mr-2" onclick="minus_one()">
+                        -1 
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="reload();">
+                        &#x21bb 
+                    </button> 
+                </div>
             </div>
         </div>   
         <p class="alert border mt-2 d-none" id="hash-div">
@@ -126,6 +126,7 @@
 
 
 <form action="" method="GET" id="reload_form"></form>
+
 {% endblock %} 
 
 
@@ -221,48 +222,8 @@
         //document.getElementById('calculate_hash_btn').click()
     }
 
-    function add_eventlisteners() {
-        // Disable default window scrolling on up-arrow key
-        window.addEventListener("keydown", function(e) {
-                if ([38].indexOf(e.keyCode) > -1) {
-                    e.preventDefault();
-                }
-            },
-            false
-        ); 
-        // Eventlisteners for arrow keys 
-        document.addEventListener('keydown', event => {
-            console.log(event.keyCode)
-            switch(event.keyCode){
-                case 38: // up arrow
-                    plus_one();
-                    break
-                case 40: // down arrow
-                    minus_one();
-                    break
-                case 39: // right arrow 
-                    reload();
-                    break
 
-                case 82: // R
-                    reload();
-                break                    
-
-                case 37: // left arrow 
-                    document.getElementById('calculate_hash_btn').click()
-                    break
-                case 66: // B
-                    document.getElementById('calculate_hash_btn').click()
-                    break                
-                case 16: // shift
-                    document.getElementById('add_to_chain_btn').click()
-                    break
-                case 84: // T
-                    document.getElementById('add_to_chain_btn').click()
-                    break
-            }
-        })
-    }
+    
 
     function isInt(value) {
         return !isNaN(value) && 
@@ -336,15 +297,48 @@
 
         }        
     } 
-    function activate_curser_in_nonce_input_field(){
-        document.getElementById("id_nonce").select()
-    }
-
-    activate_curser_in_nonce_input_field()
-    add_eventlisteners()
+   
     show_potential_hash_from_backend()
     create_styled_error_message_element()
- 
+
+    window.addEventListener("keydown", function(e) {
+        if(["ArrowUp","ArrowDown"].indexOf(e.code) > -1) {
+            console.log("hey")
+            e.preventDefault();
+        }
+    }, false);
+
+    window.onkeydown = function(event){
+        keyCode = event.keyCode 
+        
+        // Reload on 'R' or right-arrow
+        if (keyCode == 82 || keyCode == 39){
+            reload()
+        }
+
+        // Click calculate hash button on 'B' or left-arrow
+        if (keyCode == 37 || keyCode == 66){
+            calculate_hash_button = document.getElementById('calculate_hash_btn')
+            calculate_hash_button.click()
+        }
+
+        // Click add to chain button 'T' or shift
+        if (keyCode == 16 || keyCode == 84){
+            add_to_chain_button = document.getElementById('add_to_chain_btn')
+            add_to_chain_button.click()
+        }    
+
+        if(event.target.nodeName.toLowerCase() !== 'input'){
+            // Add 1 to nonce on up-arrow 
+            if (keyCode == 38){
+                plus_one()
+            }
+            // Subtract 1 fron nonce on down-arrow
+            if (keyCode == 40){
+                minus_one()
+            }
+        }
+    };
     
 </script>
 
