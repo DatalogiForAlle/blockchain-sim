@@ -310,26 +310,26 @@
 
     window.onkeydown = function(event){
         keyCode = event.keyCode 
-        
-        // Reload on 'R' or right-arrow
-        if (keyCode == 82 || keyCode == 39){
+        console.log(keyCode)
+        // Reload on 'R' 
+        if (keyCode == 82){
             reload()
         }
 
-        // Click calculate hash button on 'B' or left-arrow
-        if (keyCode == 37 || keyCode == 66){
+        // Click calculate hash button on 'B'
+        if (keyCode == 66){
             calculate_hash_button = document.getElementById('calculate_hash_btn')
             calculate_hash_button.click()
         }
 
-        // Click add to chain button 'T' or shift
-        if (keyCode == 16 || keyCode == 84){
+        // Click add to chain button 'T' 
+        if (keyCode == 164){
             add_to_chain_button = document.getElementById('add_to_chain_btn')
             add_to_chain_button.click()
         }    
 
         if(event.target.nodeName.toLowerCase() !== 'input'){
-            // Add 1 to nonce on up-arrow 
+            // Add +1 to nonce on up-arrow 
             if (keyCode == 38){
                 plus_one()
             }
