@@ -100,7 +100,7 @@
                                 </button>
                             </div>
                             <div class="modal-body">
-                            [ T ] : Tilføj blok til blokchain <br>
+                            [ T ] : Tilføj aktuel blok til blokchain <br>
                             [ B ] : Beregn hash <br>
                             [ R ] : Refresh (opdaterer bloknummer og sideindhold &#x21bb) <br>
                             [ ↑ ] : +1 (lægger 1 til nonce) <br>
@@ -333,14 +333,14 @@
 
     window.addEventListener("keydown", function(e) {
         if(["ArrowUp","ArrowDown"].indexOf(e.code) > -1) {
-            console.log("hey")
             e.preventDefault();
         }
     }, false);
 
     window.onkeydown = function(event){
         keyCode = event.keyCode 
-        console.log(keyCode)
+        //console.log(keyCode)
+        
         // Reload on 'R' 
         if (keyCode == 82){
             reload()
@@ -353,7 +353,7 @@
         }
 
         // Click add to chain button 'T' 
-        if (keyCode == 164){
+        if (keyCode == 84){
             add_to_chain_button = document.getElementById('add_to_chain_btn')
             add_to_chain_button.click()
         }    
